@@ -2,15 +2,6 @@ drop dataverse ProductClassifier if exists;
 create dataverse ProductClassifier;
 use dataverse ProductClassifier;
 
-create type ProductStaging as {
-    nodeId: bigint,
-    nodePath: string,
-    classification: string,
-    inventoryTemplateName: string?,
-    classificationFields: [ClassificationField],
-    refinementAttributes: [RefinementAttribute]
-}
-
 create type ClassificationField as {
     id: uuid,    
     classificationField: string,
@@ -23,6 +14,15 @@ create type RefinementAttribute as {
     refinementField: string,
     validValues: {{string}},
     modifiers: {{string}}
+}
+
+create type ProductStaging as {
+    nodeId: bigint,
+    nodePath: string,
+    classification: string,
+    inventoryTemplateName: string?,
+    classificationFields: [ClassificationField],
+    refinementAttributes: [RefinementAttribute]
 }
 
 create dataset ProductStagings(ProductStaging)
