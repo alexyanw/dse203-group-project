@@ -3,19 +3,17 @@ create dataverse ProductReviews;
 use dataverse ProductReviews;
 
 create type Review as {
-    id: uuid,
-    reviewerId: string,
+    reviewerId: string?,
     asin: string,
-    reviewerName: string,
-    helpful: {{int}},
+    reviewerName: string?,
+    helpful: [int],
     reviewText: string,
     overall: float,
     summary: string,
-    reviewTime: date
+    reviewTime: string,
+    unixReviewTime: bigint
 }
 
-create dataset Reviews(Review)
-    primary key id;
+create external dataset Reviews(Review)
+using localfs(("path"="127.0.0.1://data/reviews_Books.json"),("format"="json"));
 
-for $ds in dataset Metadata.Dataset return $ds;
-for $ix in dataset Metadata.Index return $ix;
