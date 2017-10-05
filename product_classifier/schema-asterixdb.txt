@@ -16,7 +16,7 @@ create type RefinementAttribute as {
     modifiers: {{string}}
 }
 
-create type ProductStaging as {
+create type ClassificationStaging as {
     nodeId: bigint,
     nodePath: string,
     classification: string,
@@ -25,7 +25,7 @@ create type ProductStaging as {
     refinementAttributes: [RefinementAttribute]
 }
 
-create dataset ProductStagings(ProductStaging)
+create dataset ClassificationStagings(ClassificationStaging)
     primary key nodeId;
 
 create dataset ClassificationFields(ClassificationField)
