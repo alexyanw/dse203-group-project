@@ -2,7 +2,7 @@ drop dataverse ProductReviews if exists;
 create dataverse ProductReviews;
 use dataverse ProductReviews;
 
-create type Review {
+create type Review as {
     id: uuid,
     reviewerId: string,
     asin: string,
