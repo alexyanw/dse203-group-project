@@ -1,0 +1,39 @@
+drop dataverse ProductClassifier if exists;
+create dataverse ProductClassifier;
+use dataverse ProductClassifier;
+
+create type ProductStaging as {
+    nodeId: bigint,
+    nodePath: string,
+    classification: string,
+    inventoryTemplateName: string?,
+    classificationFields: [ClassificationField],
+    refinementAttributes: [RefinementAttribute]
+}
+
+create type ClassificationField as {
+    id: uuid,    
+    classificationField: string,
+    validValue: string
+}
+
+create type RefinementAttribute as {
+    id: uuid,
+    refinementName: string,
+    refinementField: string,
+    validValues: {{string}},
+    modifiers: {{string}}
+}
+
+create dataset ProductStagings(ProductStaging)
+    primary key nodeId;
+
+create dataset ClassificationFields(ClassificationField)
+    primary key id;
+
+create dataset RefinementAttributes(RefinementAttribute)
+    primary key id;
+
+
+for $ds in dataset Metadata.Dataset return $ds;
+for $ix in dataset Metadata.Index return $ix;
