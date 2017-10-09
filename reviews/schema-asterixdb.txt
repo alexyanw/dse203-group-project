@@ -1,8 +1,8 @@
-drop dataverse ProductReviews if exists;
-create dataverse ProductReviews;
-use dataverse ProductReviews;
+drop dataverse TinySocial if exists;
+create dataverse TinySocial;
+use dataverse TinySocial;
 
-create type Review as {
+create type reviewType as {
     reviewerId: string?,
     asin: string,
     reviewerName: string?,
@@ -14,6 +14,10 @@ create type Review as {
     unixReviewTime: bigint
 }
 
-create external dataset Reviews(Review)
-using localfs(("path"="127.0.0.1://data/reviews_Books.json"),("format"="json"));
+drop dataset reviews if exists;
+
+create external dataset reviews(reviewType)
+using localfs(
+	("path"="127.0.0.1://data/reviews.json"),
+	("format"="json"));
 
