@@ -16,8 +16,5 @@ create type reviewType as {
 
 drop dataset reviews if exists;
 
-create external dataset reviews(reviewType)
-using localfs(
-	("path"="127.0.0.1://data/reviews.json"),
-	("format"="json"));
+create dataset reviews(reviewType)
 

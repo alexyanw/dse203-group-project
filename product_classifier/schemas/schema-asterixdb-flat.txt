@@ -1,0 +1,13 @@
+use dataverse TinySocial;
+drop dataset ClassificationInfoFlat if exists;
+drop type classificationInfoTypeFlat if exists;
+
+create type classificationInfoTypeFlat as open {
+    Classification: string?
+}
+
+
+create external dataset ClassificationInfoFlat(classificationInfoTypeFlat)
+    using localfs
+    (("path"="127.0.0.1://data/spreadsheet.csv"),
+    ("format"="delimited-text"));

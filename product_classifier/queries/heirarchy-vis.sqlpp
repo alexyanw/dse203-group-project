@@ -1,0 +1,14 @@
+use TinySocial;
+
+SELECT 
+	cat.classification,
+	concat(
+		"Categories.", 
+		regexp_replace(
+			regexp_replace(cat.nodePath,"/","."),
+			"[ &]",
+			""
+	)) as id
+FROM ClassificationInfoFlat cat
+WHERE cat.classification != "APS"
+ORDER BY length(id);
