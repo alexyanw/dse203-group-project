@@ -1,5 +1,3 @@
-drop dataverse TinySocial if exists;
-create dataverse TinySocial;
 use dataverse TinySocial;
 
 create type reviewType as {
