@@ -2,76 +2,58 @@ from util.sql_source import SqlSource
 from datetime import datetime
 
 class Products(SqlSource):
-    def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=1):
+    def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=100, asin=None):
         max_date = datetime.now() if max_date==None else max_date
-
         return self._execSqlQuery('''
-            SELECT
-              p.asin,
-              p.productid,
-              coalesce(one_star_votes,0) as one_star_votes,
-              coalesce(two_star_votes,0) as two_star_votes,
-              coalesce(three_star_votes,0) as three_star_votes,
-              coalesce(four_star_votes,0) as four_star_votes,
-              coalesce(five_star_votes,0) as five_star_votes
-            FROM products p
-            LEFT JOIN (
-                SELECT
-                  asin,
-                  count(*) as one_star_votes
-                FROM reviews
-                WHERE
-                    overall = 1
-                    AND ReviewTime >= %(min_date)s
-                    AND ReviewTime <= %(max_date)s
-                GROUP BY asin) r1
-              on
-                p.asin = r1.asin
-            LEFT JOIN (
-                SELECT
-                  asin,
-                  count(*) as two_star_votes
-                FROM reviews
-                WHERE
-                    overall = 2
-                    AND ReviewTime >= %(min_date)s
-                    AND ReviewTime <= %(max_date)s
-                GROUP BY asin) r2
-              on
-                p.asin = r2.asin
-            LEFT JOIN (
-                SELECT
-                  asin,
-                  count(*) as three_star_votes
-                FROM reviews
-                WHERE
-                    overall = 3
-                    AND ReviewTime >= %(min_date)s
-                    AND ReviewTime <= %(max_date)s
-                GROUP BY asin) r3
-              on
-                p.asin = r3.asin
-            LEFT JOIN (
-                SELECT
-                  asin,
-                  count(*) as four_star_votes
-                FROM reviews
-                WHERE
-                    overall = 4
-                    AND ReviewTime >= %(min_date)s
-                    AND ReviewTime <= %(max_date)s
-                GROUP BY asin) r4
-              on
-                p.asin = r4.asin
-            LEFT JOIN (
-                SELECT
-                  asin,
-                  count(*) as five_star_votes
-                FROM reviews
-                WHERE
-                    overall = 5
-                    AND ReviewTime >= %(min_date)s
-                    AND ReviewTime <= %(max_date)s
-                GROUP BY asin) r5
-              on
-                p.asin = r5.asin;''', {'min_date':min_date,'max_date':max_date})
+            CREATE EXTENSION IF NOT EXISTS "tsm_system_rows";
+            WITH CTE as (
+              SELECT
+                p.asin,
+                p.productid,
+                r.reviewtime,
+                r.overall
+              FROM products p
+              LEFT JOIN reviews r
+                TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(200)
+                ON p.asin = r.asin
+              WHERE
+                r.ReviewTime >= %(min_date)s
+                AND r.ReviewTime <= %(max_date)s
+              ORDER BY r.overall
+            )  SELECT
+                asin,
+                productid,
+                SUM(
+                    CASE
+                      WHEN overall = 1
+                      THEN 1
+                      ELSE 0
+                    END) as one_star_votes,
+                SUM(
+                    CASE
+                      WHEN overall = 2
+                      THEN 1
+                      ELSE 0
+                    END) as two_star_votes,
+                SUM(
+                    CASE
+                      WHEN overall = 3
+                      THEN 1
+                      ELSE 0
+                    END) as three_star_votes,
+                SUM(
+                    CASE
+                      WHEN overall = 4
+                      THEN 1
+                      ELSE 0
+                    END) as four_star_votes,
+                SUM(
+                    CASE
+                      WHEN overall = 5
+                      THEN 1
+                      ELSE 0
+                    END) as five_star_votes
+              FROM CTE
+              GROUP BY asin, productid
+              ORDER BY five_star_votes DESC
+            ''', {'min_date':min_date,'max_date':max_date, 'sample_size':sample_size})
