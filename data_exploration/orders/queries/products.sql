@@ -62,22 +62,6 @@ LEFT JOIN (
   on
     p.asin = r5.asin;
 
-/** Parse Helpful to new integer columns **/
-UPDATE reviews
-SET nhelpful =
-  cast(substring(
-      helpful,
-      position('[' in helpful)+1,
-      position(',' in helpful) - 1 - position('[' in helpful)
-  ) as int),
-  outofhelpful =
-  cast(substring(
-      helpful,
-      position(',' in helpful)+2,
-      position(']' in helpful) - position(',' in helpful) - 2
-  ) as int);
-
-
 /** Product Stats **/
 SELECT
     orderlines.productid,
@@ -103,14 +87,5 @@ JOIN products
 WHERE numunits > 0
 GROUP BY orderlines.productid, products.asin
 ORDER BY count(*) DESC;
-
-/** Helpful Ratio Distribution **/
-SELECT
-  nhelpful / outofhelpful as helpfulRatio,
-  count(*)
-FROM reviews
-WHERE outofhelpful > 0
-GROUP BY helpfulRatio
-ORDER BY helpfulRatio
 
 
