@@ -3,7 +3,7 @@ from products import *
 
 class DoraDataExplorer:
     def __init__(self,
-                 sql_connection_str="dbname='sqlbook' user='postgres' host='localhost' password='bosco241'",
+                 sql_connection_str="dbname='sqlbook' user='postgres' host='localhost' password=''",
                  asterix_url='http://localhost',
                  solr_url='',
                  random_seed=203):
@@ -17,5 +17,5 @@ if __name__ == '__main__':
     print(stats.columns)
     #print(stats.results)
 
-    dist = explorer.products.ratingsDistribution()
+    dist = explorer.products.ratingsDistribution(asin=('0007386648','0002007770'))
     print(dist.results)
