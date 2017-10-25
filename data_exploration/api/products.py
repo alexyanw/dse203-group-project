@@ -2,9 +2,9 @@ from util.sql_source import SqlSource
 from datetime import datetime
 
 class Products(SqlSource):
-    def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=100, asin=None):
+    def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=100, asin=[]):
         max_date = datetime.now() if max_date==None else max_date
-        return self._execSqlQuery('''
+        query = ('''
             CREATE EXTENSION IF NOT EXISTS "tsm_system_rows";
             WITH CTE as (
               SELECT
@@ -18,8 +18,9 @@ class Products(SqlSource):
                 ON p.asin = r.asin
               WHERE
                 r.ReviewTime >= %(min_date)s
-                AND r.ReviewTime <= %(max_date)s
-              ORDER BY r.overall
+                AND r.ReviewTime <= %(max_date)s'''
+                + (' AND r.asin IN %(asin_list)s ' if len(asin) else ' ')
+                + '''ORDER BY r.overall
             )  SELECT
                 asin,
                 productid,
@@ -55,10 +56,12 @@ class Products(SqlSource):
                     END) as five_star_votes
               FROM CTE
               GROUP BY asin, productid
-              ORDER BY five_star_votes DESC''',
+              ORDER BY five_star_votes DESC''')
+        return self._execSqlQuery(query,
             {
                 'min_date':min_date,
                 'max_date':max_date,
+                'asin_list':asin,
                 'sample_size':sample_size,
                 'random_seed':self._random_seed
             })
