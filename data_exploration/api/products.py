@@ -14,7 +14,7 @@ class Products(SqlSource):
                 r.overall
               FROM products p
               LEFT JOIN reviews r
-                TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(200)
+                TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(%(random_seed)s)
                 ON p.asin = r.asin
               WHERE
                 r.ReviewTime >= %(min_date)s
@@ -55,5 +55,10 @@ class Products(SqlSource):
                     END) as five_star_votes
               FROM CTE
               GROUP BY asin, productid
-              ORDER BY five_star_votes DESC
-            ''', {'min_date':min_date,'max_date':max_date, 'sample_size':sample_size})
+              ORDER BY five_star_votes DESC''',
+            {
+                'min_date':min_date,
+                'max_date':max_date,
+                'sample_size':sample_size,
+                'random_seed':self._random_seed
+            })
