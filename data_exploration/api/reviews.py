@@ -10,7 +10,7 @@ class Reviews(SqlSource, SolrSource):
         SolrSource.__init__(self, solr_server)
 
     def termsByAsin(self, asin):
-        results = self._execSolrQuery(
+        return self._execSolrQuery(
             'asin:"{}"'.format(asin),
             **{
                 'facet':'true',
