@@ -4,7 +4,7 @@ from reviews import *
 
 class DataExplorer:
     def __init__(self,
-                 sql_connection_str="dbname='sqlbook' user='postgres' host='localhost' password='bosco241'",
+                 sql_connection_str="dbname='sqlbook' user='postgres' host='localhost' password=''",
                  asterix_url='http://localhost',
                  solr_url='http://localhost:8983/solr/bookstore/',
                  random_seed=203):
