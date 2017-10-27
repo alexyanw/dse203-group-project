@@ -10,10 +10,10 @@ import numpy as np
 #avg review rating (products & reviews on asin)
 #total_review_count
 #review_helpful_rate
-#total_sold_copies_current_month
+#total_copy_current_month
 # dynamic features
-#total_sold_copies_during
-#total_sold_copies_channel
+#total_copy_during
+#total_copy_channel
 class ProductView:
     def __init__(self, server = 'localhost', port = 5432, database = 'SQLBook'):
         dburl = 'postgresql://postgres:@' + server + ':' + str(port) + '/' + database
@@ -29,15 +29,16 @@ class ProductView:
         }
 
     def _execute(self, cmd, **kwargs):
-        if kwargs['limit']:
+        if 'limit' in kwargs:
             cmd += "LIMIT {}".format(kwargs['limit'])
-        print(cmd)
+        if kwargs.get('debug', False):
+            print(cmd)
         df = pd.read_sql_query(cmd, self.pg_conn)
         return df
 
     def get_product_orders(self, **kwargs):
         cmd = '''
-SELECT p.productid, p.fullprice, p.isinstock, count(ol) as total_order_count, SUM(ol.numunits) as total_copy_count
+SELECT p.productid, p.category, p.fullprice, p.isinstock, count(ol) as total_order_count, SUM(ol.numunits) as total_copy_count
 FROM products p, orderlines ol
 WHERE p.productid = ol.productid
 GROUP BY p.productid
@@ -75,10 +76,14 @@ GROUP BY p.productid
         cmd += ",\n".join([f(view=True) for f in func_ptrs])
         # HACK: hardcode view names
         cmd += '''
-SELECT {}
-FROM product_orders po, product_reviews pr
-WHERE po.productid = pr.productid
+SELECT product_orders.productid,product_orders.category,{}
+FROM product_orders, product_reviews
+WHERE product_orders.productid = product_reviews.productid
 '''.format(', '.join(features))
+        
+        if 'where' in kwargs:
+            cmd += "AND {}\n".format(kwargs['where'])
+
         return self._execute(cmd, **kwargs)
 
 
