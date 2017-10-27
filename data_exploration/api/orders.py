@@ -17,7 +17,7 @@ class Orders(SqlSource):
                 z.countyname,
                 z.countypop''')
 
-    def statsByProduct(self, min_date=None, max_date=None, sample_size=1):
+    def statsByProduct(self, min_date=None, max_date=None, sample_size=100, order_by='num_orders'):
         return self._execSqlQuery('''
             SELECT
                 orderlines.productid,
@@ -41,4 +41,5 @@ class Orders(SqlSource):
             JOIN products
               ON orderlines.productid = products.productid
             WHERE numunits > 0
-            GROUP BY orderlines.productid, products.asin''')
+            GROUP BY orderlines.productid, products.asin
+            ORDER BY {} DESC'''.format(order_by))
