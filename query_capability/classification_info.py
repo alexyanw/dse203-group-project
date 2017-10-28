@@ -1,10 +1,12 @@
 # Wrapper of ClassificationInfo dataset
-import asterixdb-python
+from asterixdb_python import AsterixConnection 
 
 class ClassificationInfo:
-    def __init__(self, server = 'http://localhost', port = 19002):
+    def __init__(self, server = 'http://localhost', port = 19002, stat=False):
         self.asterix_conn = AsterixConnection(server, port)
-        self.get_stat()
+        self.init_stat = stat
+        if stat:
+            self.get_stat()
 
     def get_stat(self):
         cmd = '''
@@ -36,6 +38,9 @@ from ClassificationInfo c ) as level_8
         return self.levels
 
     def print_level_stat(self):
+        if self.init_stat == False:
+            print("Please call get_stat() first\n")
+            return
         level_counts = {}
         for l in levels:
             count = len(self.levels[l])
@@ -68,6 +73,14 @@ c.category.nested.nested.nested.nested.level_4,
 c.category.nested.nested.nested.nested.nested.level_5
 from ClassificationInfo c 
 )
+'''
+        if id in kwargs:  # return nodeid as list
+            cmd += '''
+select value m.nodeid
+from node_map m
+'''
+        else:  # return structure with both nodeid and level info
+            cmd += '''
 select value m
 from node_map m
 '''
@@ -90,7 +103,7 @@ c.category.nested.nested.nested.nested.nested.level_5]
 from ClassificationInfo c 
 )
 '''
-        if kwargs['id']:  # return nodeid as list
+        if id in kwargs:  # return nodeid as list
             cmd += '''
 select value m.nodeid
 from node_map m

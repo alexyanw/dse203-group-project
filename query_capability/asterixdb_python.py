@@ -1,6 +1,8 @@
 from urllib import parse, request
 from json import loads
 
+__all__ = ['AsterixConnection']
+
 class QueryResponse:
     def __init__(self, raw_response):
         self._json = loads(raw_response)
@@ -30,7 +32,7 @@ class AsterixConnection:
         if client_context_id:
             payload['client_context_id'] = client_context_id
 
-	data = parse.urlencode(payload).encode("utf-8")
+        data = parse.urlencode(payload).encode("utf-8")
         req = request.Request(url, data)
         resource = request.urlopen(req)
         #decode = resource.headers.get_content_charset()
