@@ -4,6 +4,11 @@ from datetime import datetime
 class Products(SqlSource):
     def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=100, asin=[]):
         max_date = datetime.now() if max_date==None else max_date
+
+        asin_filter = (' AND r.asin IN %(asin_list)s ' if len(asin) > 1
+            else ' AND r.asin = %(asin_list)s ' if len(asin) == 1
+            else ' ')
+
         query = ('''
             CREATE EXTENSION IF NOT EXISTS "tsm_system_rows";
             WITH CTE as (
@@ -19,7 +24,7 @@ class Products(SqlSource):
               WHERE
                 r.ReviewTime >= %(min_date)s
                 AND r.ReviewTime <= %(max_date)s'''
-                + (' AND r.asin IN %(asin_list)s ' if len(asin) else ' ')
+                + asin_filter
                 + '''ORDER BY r.overall
             )  SELECT
                 asin,
@@ -57,6 +62,7 @@ class Products(SqlSource):
               FROM CTE
               GROUP BY asin, productid
               ORDER BY five_star_votes DESC''')
+
         return self._execSqlQuery(query,
             {
                 'min_date':min_date,
