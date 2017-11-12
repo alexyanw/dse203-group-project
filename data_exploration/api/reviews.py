@@ -1,17 +1,16 @@
-from util.sql_source import SqlSource
-from util.solr_source import SolrSource
+from datasources import SqlSource, SolrSource
 from datetime import datetime
 from nltk.corpus import stopwords
 
 class Reviews(SqlSource, SolrSource):
 
-    def __init__(self, sql_connection_str, solr_server, random_seed):
-        SqlSource.__init__(self, sql_connection_str, random_seed)
-        SolrSource.__init__(self, solr_server)
+    def __init__(self, sql_config, solr_config):
+        SqlSource.__init__(self, sql_config)
+        SolrSource.__init__(self, solr_config)
 
     def termsByAsin(self, asin):
         return self._execSolrQuery(
-            'asin:"{}"'.format(asin),
+            'asin:"{}"'.format(','.join(asin)),
             **{
                 'facet':'true',
                 'facet.field':'reviewText'
