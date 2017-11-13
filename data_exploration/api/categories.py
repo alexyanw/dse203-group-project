@@ -2,7 +2,7 @@ from util.asterixdb_python import AsterixConnection
 
 class Categories(AsterixConnection):
 
-    def search(self, stringsearch = '', min_date=None, max_date=None, sample_size=100):
+    def search(self, stringsearch = ''):
         return self.query('''
         use TinySocial;
         SELECT VALUE user
