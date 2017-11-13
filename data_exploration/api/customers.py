@@ -1,4 +1,4 @@
-from util.sql_source import SqlSource
+from datasources import SqlSource
 
 class Customers(SqlSource):
 
@@ -16,14 +16,14 @@ class Customers(SqlSource):
             WHERE orders.customerid=customers.customerid and customers.customerid != 0
             GROUP BY HouseholdID order by {} DESC'''.format(order_by))
 
-    def membersOfHousehold(self, min_date=None, max_date=None, sample_size=100 householdID=0):
+    def membersOfHousehold(self, min_date=None, max_date=None, sample_size=100, householdID=0):
         return self._execSqlQuery('''
 	    SELECT
                 customerid, firstname, gender 
             FROM customers 
             WHERE householdid={}'''.format(householdID))
 
-    def productsByHousehold(self, min_date=None, max_date=None, sample_size=100 householdID=0):
+    def productsByHousehold(self, min_date=None, max_date=None, sample_size=100, householdID=0):
         return self._execSqlQuery('''
 	    SELECT
 	        distinct(products.productid), products.ASIN

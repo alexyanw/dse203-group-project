@@ -1,4 +1,4 @@
-from util.sql_source import SqlSource
+from datasources import SqlSource
 
 class Orders(SqlSource):
 

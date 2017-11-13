@@ -1,4 +1,4 @@
-from util.sql_source import SqlSource
+from datasources import SqlSource
 from datetime import datetime
 
 class Products(SqlSource):
