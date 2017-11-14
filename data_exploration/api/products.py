@@ -3,14 +3,14 @@ from datetime import datetime
 
 class Products(SqlSource):
     def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=100, asin=[]):
-        max_date = datetime.now() if max_date==None else max_date
+
+        max_date_filter =  ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
 
         asin_filter = (' AND r.asin IN %(asin_list)s ' if len(asin) > 1
             else ' AND r.asin = %(asin_list)s ' if len(asin) == 1
             else ' ')
 
         query = ('''
-            CREATE EXTENSION IF NOT EXISTS "tsm_system_rows";
             WITH CTE as (
               SELECT
                 p.asin,
@@ -22,8 +22,8 @@ class Products(SqlSource):
                 TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(%(random_seed)s)
                 ON p.asin = r.asin
               WHERE
-                r.ReviewTime >= %(min_date)s
-                AND r.ReviewTime <= %(max_date)s'''
+                r.ReviewTime >= %(min_date)s'''
+                + max_date_filter
                 + asin_filter
                 + '''ORDER BY r.overall
             )  SELECT
