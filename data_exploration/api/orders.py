@@ -2,7 +2,9 @@ from datasources import SqlSource
 
 class Orders(SqlSource):
 
-    def statsByZipcode(self, min_date=None, max_date=None, sample_size=1):
+    def statsByZipcode(self, min_date='1900-1-1', max_date=None, sample_size=100):
+        max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
+
         return self._execSqlQuery('''
             SELECT
                 z.countyname,
@@ -12,12 +14,24 @@ class Orders(SqlSource):
             FROM
                 zipcounty z,
                 orders o
-            WHERE z.zipcode = o.zipcode
+                TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(%(random_seed)s)
+            WHERE
+                z.zipcode = o.zipcode
+                AND o.orderdate >= %(min_date)s'''
+                + max_date_filter + '''
             GROUP BY
                 z.countyname,
-                z.countypop''')
+                z.countypop''',
+            {
+               'sample_size':sample_size,
+                'random_seed':self._random_seed,
+                'min_date':min_date,
+                'max_date':max_date
+            })
 
-    def statsByProduct(self, min_date=None, max_date=None, sample_size=100, order_by='num_orders'):
+    def statsByProduct(self, min_date='1900-1-1', max_date=None, sample_size=100, order_by='num_orders'):
+        max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
+
         return self._execSqlQuery('''
             SELECT
                 orderlines.productid,
@@ -38,8 +52,20 @@ class Orders(SqlSource):
                 avg(regexp_replace(totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as totalprice_avg,
                 sum(regexp_replace(totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as totalprice_sum
             FROM orderlines
+            TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(%(random_seed)s)
             JOIN products
               ON orderlines.productid = products.productid
-            WHERE numunits > 0
+            JOIN orders o
+              ON orderlines.orderid = o.orderid
+            WHERE
+                numunits > 0
+                 AND o.orderdate >= %(min_date)s'''
+                + max_date_filter + '''
             GROUP BY orderlines.productid, products.asin
-            ORDER BY {} DESC'''.format(order_by))
+            ORDER BY {} DESC'''.format(order_by),
+            {
+              'sample_size': sample_size,
+              'random_seed': self._random_seed,
+              'min_date': min_date,
+              'max_date': max_date
+            })
