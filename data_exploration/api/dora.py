@@ -16,9 +16,12 @@ if __name__ == '__main__':
     print(stats.columns)
     #print(stats.results)
 
-   # dist = explorer.products.ratingsDistribution(asin=('0007386648','0002007770'))
-    # print(dist.results)
+    dist = explorer.products.ratingsDistribution(asin=('0007386648','0002007770'))
+    print(dist.results)
 
     terms = explorer.reviews.termsByAsin(asin='0007386648')
     print(terms.docs)
     print(terms.facets)
+
+    dist2 = explorer.products.ratingsDistribution(asin=('0007386648', '0002007770'))
+    print(dist2.results)
