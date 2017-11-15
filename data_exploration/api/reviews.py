@@ -1,6 +1,5 @@
-from datasources import SqlSource, SolrSource, log
-from datetime import datetime
-from nltk.corpus import stopwords
+from datasources import SqlSource, SolrSource
+from logging import log
 
 class Reviews(SqlSource, SolrSource):
 

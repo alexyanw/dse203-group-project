@@ -1,4 +1,5 @@
-from datasources import SqlSource, log
+from datasources import SqlSource
+from logging import log
 from datetime import datetime
 
 class Products(SqlSource):

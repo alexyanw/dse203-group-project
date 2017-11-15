@@ -8,6 +8,9 @@ import datetime
 from hashlib import sha1
 import types
 
+
+
+
 class QueryResponse(object):
     def __init__(self, columns, results):
         self.columns = columns
@@ -63,23 +66,7 @@ class Cacheable(object):
 
         pickle.dump(cache_obj, open(query_path, 'wb'))
 
-def log(f):
-        _log_file = '.log'
 
-        if not os.path.isfile(_log_file):
-            l = open(_log_file, "w")
-            l.close()
-        def wrap(self,*args,**kwargs):
-            line = f.__qualname__+ ',' + str(args) + ',' + str(kwargs) + ',' + str(datetime.datetime.now())
-            result = f(self, *args, **kwargs)
-            is_cached = str(result.is_cached if hasattr(result, 'is_cached') else False)
-
-            line += ',' + str(datetime.datetime.now()) + ','+is_cached+'\n'
-            with open(_log_file, "a") as l:
-                l.write(line)
-            return result
-
-        return wrap
 
 
 
