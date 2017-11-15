@@ -1,53 +1,45 @@
 # wrapper class of product features from postgresql
-import pandas as pd
 import sys
-from sqlalchemy import create_engine
-import numpy as np
+from functools import reduce
 
-# features
-#price (fullprice in products table)
-#isinstock( products table)
-#avg review rating (products & reviews on asin)
-#total_review_count
-#review_helpful_rate
-#total_copy_current_month
-# dynamic features
-#total_copy_during
-#total_copy_channel
 class ProductView:
-    def __init__(self, server = 'localhost', port = 5432, database = 'SQLBook'):
-        dburl = 'postgresql://postgres:@' + server + ':' + str(port) + '/' + database
-        self.pg_conn = create_engine(dburl)
-        self.feature_map = {
-            'fullprice' : self.get_product_orders,
-            'isinstock' : self.get_product_orders,
-            'total_review_count' : self.get_product_reviews,
-            'avg_review_rating'  : self.get_product_reviews,
-            #'review_helpful_rate': self.get_product_reviews,
-            'total_order_count'  : self.get_product_orders,
-            'total_copy_count'   : self.get_product_orders,
+    def __init__(self):
+        #self.dbengine = PostgresEngine(server, port, database)
+        self.schema_map = {
+            'product_self': (self.get_product, ['productid', 'nodeid', 'fullprice', 'isinstock']),
+            'product_reviews' : (self.get_product_reviews, ['productid', 'total_review_count', 'avg_review_rating']),
+            'product_orders'  : (self.get_product_orders, ['productid', 'total_order_count', 'total_copy_count']),
+            #'total_copy_count'   : ('product_orders', self.get_product_orders),
         }
 
-    def _execute(self, cmd, **kwargs):
+    def _execute(self, viewname, cmd, **kwargs):
+        dbcmd = kwargs.get('prefix', '')
+        if 'view' in kwargs:
+            dbcmd += "{} as ({})".format(viewname, cmd)
+            return dbcmd
+        dbcmd += cmd
         if 'limit' in kwargs:
-            cmd += "LIMIT {}".format(kwargs['limit'])
-        if kwargs.get('debug', False):
-            print(cmd)
-        df = pd.read_sql_query(cmd, self.pg_conn)
-        return df
+            dbcmd += "LIMIT {}".format(kwargs['limit'])
+        return dbcmd
+
+
+        #return self.dbengine.execute(dbcmd)
+
+    def get_product(self, **kwargs):
+        cmd = '''
+SELECT p.productid, p.category as nodeid, p.fullprice, p.isinstock
+FROM products p
+'''
+        return self._execute('product_self', cmd, **kwargs)
 
     def get_product_orders(self, **kwargs):
         cmd = '''
-SELECT p.productid, p.category, p.fullprice, p.isinstock, count(ol) as total_order_count, SUM(ol.numunits) as total_copy_count
+SELECT p.productid, count(ol) as total_order_count, SUM(ol.numunits) as total_copy_count
 FROM products p, orderlines ol
 WHERE p.productid = ol.productid
 GROUP BY p.productid
 '''
-        if kwargs['view']:
-            cmd = "product_orders as (\n{}\n)".format(cmd)
-            return cmd
-
-        return self._execute(cmd, **kwargs)
+        return self._execute('product_orders', cmd, **kwargs)
 
     def get_product_reviews(self, **kwargs):
         cmd = '''
@@ -56,35 +48,46 @@ FROM products p, reviews r
 WHERE p.asin = r.asin
 GROUP BY p.productid
 '''
-        if kwargs['view']:
-            cmd = "product_reviews as (\n{}\n)".format(cmd)
-            return cmd
-        return self._execute(cmd, **kwargs)
+        return self._execute('product_reviews', cmd, **kwargs)
 
     def get_product_view(self, features=[], **kwargs):
+        valid_features = set(reduce(lambda a, b: a+b, [v[1] for v in self.schema_map.values()], []))
         if len(features) == 0:
-            features = self.feature_map.keys()
+            features = valid_features
         else:
-            # validate features against feature_map
-            invalid_features = set(features) - set(self.feature_map.keys())
+            # validate features against schema_map
+            invalid_features = set(features) - valid_features
             if invalid_features:
                 print('get_product_view not support features:', invalid_features)
                 return None
+            features = set(features)
 
-        func_ptrs = set(self.feature_map[f] for f in features)
-        cmd = 'WITH '
-        cmd += ",\n".join([f(view=True) for f in func_ptrs])
-        # HACK: hardcode view names
-        cmd += '''
-SELECT product_orders.productid,product_orders.category,{}
-FROM product_orders, product_reviews
-WHERE product_orders.productid = product_reviews.productid
-'''.format(', '.join(features))
+        subviews = self.schema_map.keys()
+        feature_map = {}
+        for feature in features:
+            for view,schema in self.schema_map.items():
+                if feature in schema[1]:
+                    feature_map[feature] = view
+                    break
+
+        func_ptrs = [self.schema_map[feature_map[f]][0] for f in feature_map]
+        view_contents = [f(view=True) for f in func_ptrs]
+        join_keys = ["{}.productid = product_self.productid".format(sv) for sv in (set(subviews) - set(['product_self']))]
+        feature_list = [feature_map[f]+'.'+f for f in features]
+        dbcmd = '''
+SELECT {}
+FROM {}
+WHERE {}
+'''.format(', '.join(feature_list), ', '.join(subviews), ' AND '.join(join_keys))
         
         if 'where' in kwargs:
-            cmd += "AND {}\n".format(kwargs['where'])
+            dbcmd += "AND {}\n".format(kwargs['where'])
 
-        return self._execute(cmd, **kwargs)
+        view_contents.append(self._execute('product_view', dbcmd, **kwargs))
+        return view_contents
 
+    # uniform interface
+    def get_views(self, features=[], **kwargs):
+        return self.get_product_view(features, **kwargs)
 
         
