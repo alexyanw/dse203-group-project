@@ -1,14 +1,13 @@
-from datasources import SqlSource
+from datasources import SqlSource, log
 from datetime import datetime
 
 class Products(SqlSource):
+    @log
     def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=100, asin=[]):
 
         max_date_filter =  ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
 
-        asin_filter = (' AND r.asin IN %(asin_list)s ' if len(asin) > 1
-            else ' AND r.asin = %(asin_list)s ' if len(asin) == 1
-            else ' ')
+        asin_filter = ' AND r.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
 
         query = ('''
             WITH CTE as (
@@ -67,7 +66,7 @@ class Products(SqlSource):
             {
                 'min_date':min_date,
                 'max_date':max_date,
-                'asin_list':asin,
+                'asin_list':tuple(asin),
                 'sample_size':sample_size,
                 'random_seed':self._random_seed
             })

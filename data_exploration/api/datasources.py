@@ -6,16 +6,21 @@ import os
 import pickle
 import datetime
 from hashlib import sha1
+import types
 
-class QueryResponse:
+class QueryResponse(object):
     def __init__(self, columns, results):
         self.columns = columns
         self.results = results
+        self.is_cached = False
 
-class Cacheable:
-    def __init__(self):
+class Cacheable(object):
+    def __init__(self, ttl):
         self._dir = '.cache'
-        self._ttl = 60
+        self._ttl = ttl
+
+        if not os.path.exists(self._dir):
+            os.makedirs(self._dir)
 
     def _clear_cache(self):
         for the_file in os.listdir(self._dir):
@@ -34,10 +39,15 @@ class Cacheable:
 
         cached = pickle.load(open(query_path, 'rb'))
 
-        if cached['timestamp'] + datetime.timedelta(0, 0, self._ttl) >= datetime.datetime.now():
+        if (
+            ('timestamp' not in cached.keys())
+            or ('response' not in cached.keys())
+            or (cached['timestamp'] + datetime.timedelta(0, 0, self._ttl) >= datetime.datetime.now())
+        ):
             os.remove(query_path)
             return None
 
+        cached['response'].is_cached = True
         return cached['response']
 
     def _cache(self, query, response):
@@ -52,6 +62,27 @@ class Cacheable:
         }
 
         pickle.dump(cache_obj, open(query_path, 'wb'))
+
+def log(f):
+        _log_file = '.log'
+
+        if not os.path.isfile(_log_file):
+            l = open(_log_file, "w")
+            l.close()
+        def wrap(self,*args,**kwargs):
+            line = f.__qualname__+ ',' + str(args) + ',' + str(kwargs) + ',' + str(datetime.datetime.now())
+            result = f(self, *args, **kwargs)
+            is_cached = str(result.is_cached if hasattr(result, 'is_cached') else False)
+
+            line += ',' + str(datetime.datetime.now()) + ','+is_cached+'\n'
+            with open(_log_file, "a") as l:
+                l.write(line)
+            return result
+
+        return wrap
+
+
+
 
 class AsterixSource:
     def __init__(self, server_url):
@@ -72,7 +103,7 @@ class AsterixSource:
 
 class SolrSource(Cacheable):
     def __init__(self, solr_config):
-        Cacheable.__init__(self)
+        Cacheable.__init__(self, solr_config.cache_ttl)
         self._solr_conn = solr = pysolr.Solr(solr_config.host, timeout=10)
 
     def _execSolrQuery(self, q, **kwargs):
@@ -80,8 +111,6 @@ class SolrSource(Cacheable):
         compiled_query.update(kwargs)
         compiled_query = str(compiled_query).encode('utf-8')
         cache_hit = self._search_cache(compiled_query)
-
-        print(compiled_query)
 
         if cache_hit is not None:
             print('cache hit')
@@ -112,7 +141,7 @@ class SolrSource(Cacheable):
 
 class SqlSource(Cacheable):
     def __init__(self, sql_config):
-        Cacheable.__init__(self)
+        Cacheable.__init__(self, sql_config.cache_ttl)
         try:
             self._postgres_conn = psycopg2.connect(sql_config.connection_string)
         except psycopg2.OperationalError as e:
@@ -132,10 +161,8 @@ class SqlSource(Cacheable):
         cache_hit = self._search_cache(compiled_query)
 
         if cache_hit:
-            print('cache hit')
             response = cache_hit
         else:
-            print('cache miss')
             c.execute(query, params)
             results = c.fetchall()
             columns = [desc[0] for desc in c.description]

@@ -18,15 +18,27 @@ class SqlConfig(ConfigType):
     def random_seed(self):
         return self.get_property('randomSeed')
 
+    @property
+    def cache_ttl(self):
+        return self.get_property('cacheTtl')
+
 class AsterixConfig(ConfigType):
     @property
     def host(self):
         return self.get_property('host')
 
+    @property
+    def cache_ttl(self):
+        return self.get_property('cacheTtl')
+
 class SolrConfig(ConfigType):
     @property
     def host(self):
         return self.get_property('host')
+
+    @property
+    def cache_ttl(self):
+        return self.get_property('cacheTtl')
 
 class Config(object):
     def __init__(self, path='.config'):
