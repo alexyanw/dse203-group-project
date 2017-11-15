@@ -4,7 +4,7 @@ from review_text import ReviewText
 
 __all__ = ['SolrEngine']
 
-class QueryResponse:
+class SolrResponse:
     def __init__(self, raw_response):
         self._json = loads(raw_response)
 
@@ -27,10 +27,9 @@ class SolrEngine:
         self.special_handler = {
         }
 
-
     def execute(self, params, **kwargs):
         #"/select?q=" + query
-        queryurl = self.baseurl += "/select?" + params
+        queryurl = self.baseurl + "/select?" + params
         if 'debug' in kwargs: return queryurl
 
         req = request.Request(self.baseurl)
@@ -38,11 +37,11 @@ class SolrEngine:
         #decode = 'iso-8859-1'
         #str_data = result.read().decode(decode)
         str_data = result.read()
-        return QueryResponse(str_data)
+        return SolrResponse(str_data)
 
     def queryDatalog(self, datalog, **kwargs):
         builder = SolrUrlBuilder(datalog)
-        params = builder.getQueryCmd(self.special_handler)
+        params = builder.getQueryUrl(self.special_handler)
 
         return self.execute(params, **kwargs)
 
