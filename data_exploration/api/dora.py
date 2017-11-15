@@ -20,7 +20,8 @@ if __name__ == '__main__':
     print(dist.results)
 
     terms = explorer.reviews.termsByAsin(asin=['0007386648'])
-    print(terms)
+    print(terms.columns)
+    print(terms.results)
 
 
     dist2 = explorer.products.ratingsDistribution(asin=('0007386648', '0002007770'))

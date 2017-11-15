@@ -1,5 +1,5 @@
 from datasources import SqlSource, SolrSource
-from logging import log
+from logger import log
 
 class Reviews(SqlSource, SolrSource):
 

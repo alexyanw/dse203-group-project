@@ -66,11 +66,6 @@ class Cacheable(object):
 
         pickle.dump(cache_obj, open(query_path, 'wb'))
 
-
-
-
-
-
 class AsterixSource:
     def __init__(self, server_url):
         self._asterix_conn = psycopg2.connect(connection_string)
