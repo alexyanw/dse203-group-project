@@ -11,7 +11,7 @@ class Reviews(SqlSource, SolrSource):
     def termsByAsin(self, asin):
         return self._execSolrQuery(
             'asin:"{}"'.format(asin),
-            **{
+            {
                 'facet':'true',
                 'facet.field':'reviewText'
             })

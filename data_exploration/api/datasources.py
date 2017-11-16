@@ -1,15 +1,12 @@
 import psycopg2
 import sys
 import pysolr
-from util.asterixdb_python import *
 import os
 import pickle
 import datetime
 from hashlib import sha1
-import types
-
-
-
+from urllib import parse, request
+from json import loads
 
 class QueryResponse(object):
     def __init__(self, columns, results):
@@ -66,58 +63,120 @@ class Cacheable(object):
 
         pickle.dump(cache_obj, open(query_path, 'wb'))
 
-class AsterixSource:
-    def __init__(self, server_url):
-        self._asterix_conn = psycopg2.connect(connection_string)
+class AsterixQueryResponse:
+    def __init__(self, raw_response):
+        self._json = loads(raw_response)
 
-    def _execSqlPpQuery(self,query, params=None):
-        c = self._postgres_conn.cursor()
+        self.requestID = self._json['requestID'] if 'requestID' in self._json else None
+        self.clientContextID = self._json['clientContextID'] if 'clientContextID' in self._json else None
+        self.signature = self._json['signature'] if 'signature' in self._json else None
+        self.results = self._json['results'] if 'results' in self. _json else None
+        self.metrics = self._json['metrics'] if 'metrics' in self._json else None
 
-        c.execute(query,params)
-        results = c.fetchall()
-        columns = [desc[0] for desc in c.description]
+class AsterixConnection:
+    def __init__(self, server):
+        self._server = server
 
-        c.close()
-        return SqlQueryResponse(
-            columns=columns,
-            results=results
+    def query(self, statement, pretty=False, client_context_id=None):
+        endpoint = '/query/service'
+
+        url = self._server + endpoint
+
+
+        payload = {
+            'statement': statement,
+            'pretty': pretty
+        }
+
+        if client_context_id:
+            payload['client_context_id'] = client_context_id
+
+        data = parse.urlencode(payload).encode("utf-8")
+        req = request.Request(url, data)
+        response = request.urlopen(req).read()
+
+        return AsterixQueryResponse(response)
+
+class AsterixSource(Cacheable):
+    def __init__(self, asterix_config):
+        Cacheable.__init__(self, asterix_config.cache_ttl)
+        self._asterix_conn = AsterixConnection(asterix_config.host)
+        self._collection = asterix_config.collection
+
+    def _transform_server_response(self, server_response):
+        results = server_response.results
+
+        if results != None:
+            fields = [str(x) for x in results[0].keys()]
+        else:
+            None
+        tuples = [tuple([dic[field] for field in fields]) for dic in results]
+
+        return QueryResponse(
+            columns=fields,
+            results=tuples
         )
+
+    def _compile_query(self, query, params=None):
+        if params is not None:
+            query = query.format(**params)
+
+        compiled = 'use ' + self._collection + ';' + query
+        return compiled.encode('utf-8')
+
+    def _execSqlPpQuery(self, query, params=None):
+        compiled_query = self._compile_query(query, params)
+        cache_hit = self._search_cache(compiled_query)
+
+        if cache_hit is not None:
+            response = cache_hit
+        else:
+            server_response = self._asterix_conn.query(compiled_query)
+            response = self._transform_server_response(server_response)
+            self._cache(compiled_query, response)
+
+        return response
 
 class SolrSource(Cacheable):
     def __init__(self, solr_config):
         Cacheable.__init__(self, solr_config.cache_ttl)
         self._solr_conn = solr = pysolr.Solr(solr_config.host, timeout=10)
 
-    def _execSolrQuery(self, q, **kwargs):
-        compiled_query = {'q':q}
-        compiled_query.update(kwargs)
-        compiled_query = str(compiled_query).encode('utf-8')
+    def _transform_server_response(self, server_response, facet_field=None):
+        if facet_field is not None:
+            facet_results = server_response.facets['facet_fields'][facet_field]
+            return QueryResponse(
+                columns=[facet_field, 'score'],
+                results=[
+                    (facet_results[i - 1], x)
+                    for i, x
+                    in enumerate(facet_results)
+                    if i % 2 > 0])
+
+    def _compile_query(self, query, params=None):
+        compiled_query = {'q': query}
+        if params is not None:
+            compiled_query.update(params)
+        return str(compiled_query).encode('utf-8')
+
+    def _get_response(self,compiled_query, params):
+        facet_field = params['facet.field'] if 'facet' in params.keys() else None
+        full_response = self._solr_conn.search(
+            q=compiled_query,
+            search_handler='select',
+            **params)
+
+        return self._transform_server_response(full_response, facet_field)
+
+    def _execSolrQuery(self, query, params):
+        compiled_query = self._compile_query(query, params)
         cache_hit = self._search_cache(compiled_query)
 
         if cache_hit is not None:
-            print('cache hit')
             response = cache_hit
         else:
-            print('cache miss')
-
-            full_response = self._solr_conn.search(
-                q=q,
-                search_handler='select',
-                **kwargs)
-            print('facet' in kwargs.keys())
-            print(kwargs['facet'] == 'true')
-            if ('facet' in kwargs.keys()) & (kwargs['facet'] == 'true'):
-                field = kwargs['facet.field']
-                facet_results = full_response.facets['facet_fields'][field]
-                response = QueryResponse(
-                    columns=[field,'score'],
-                    results=[
-                        (facet_results[i-1], x)
-                        for i,x
-                        in enumerate(facet_results)
-                        if i%2>0])
-
-                self._cache(compiled_query, response)
+            response = self._get_response(query, params)
+            self._cache(compiled_query, response)
 
         return response
 

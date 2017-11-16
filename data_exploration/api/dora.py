@@ -1,6 +1,8 @@
 from orders import *
 from products import *
 from reviews import *
+from categories import *
+
 from config import Config
 
 class DataExplorer:
@@ -8,6 +10,7 @@ class DataExplorer:
         self.products = Products(config.sql_config)
         self.reviews = Reviews(config.sql_config, config.solr_config)
         self.orders = Orders(config.sql_config)
+        self.categories = Categories(config.asterix_config)
 
 
 if __name__ == '__main__':
@@ -27,5 +30,15 @@ if __name__ == '__main__':
     dist2 = explorer.products.ratingsDistribution(asin=('0007386648', '0002007770'))
     print(dist2.results)
 
-    #orders = explorer.orders.statsByZipcode()
-    #print(orders.results)
+    orders = explorer.orders.statsByZipcode()
+    print(orders.results)
+
+    cat = explorer.categories.search('Architecture', classfication_only=True)
+    print(cat.results)
+
+    cat = explorer.categories.search('Architecture', classfication_only=True)
+    print(cat.results)
+
+    terms = explorer.reviews.termsByAsin(asin=['0007386648'])
+    print(terms.columns)
+    print(terms.results)

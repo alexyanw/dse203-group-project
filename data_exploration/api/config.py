@@ -28,6 +28,10 @@ class AsterixConfig(ConfigType):
         return self.get_property('host')
 
     @property
+    def collection(self):
+        return self.get_property('collection')
+
+    @property
     def cache_ttl(self):
         return self.get_property('cacheTtl')
 
