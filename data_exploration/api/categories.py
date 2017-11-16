@@ -32,3 +32,47 @@ class Categories(AsterixSource):
                     or user.category.nested.nested.nested.nested.nested.level_5 LIKE "%{search}%";'''
 
         return self._execSqlPpQuery(query, {'search':stringsearch})
+    
+    
+        
+        def parentOf_depth1(self, nodeID = 0, depth = None):
+        return self.query('''
+        use TinySocial;
+        SELECT CASE WHEN ci.category.nested.nested.level_2 = "N/A" THEN
+                    (SELECT VALUE c.nodeID
+                    FROM ClassificationInfo c
+                    WHERE ci.category.level_0 = c.category.level_0 
+                        and c.category.nested.level_1 = "N/A")
+                WHEN ci.category.nested.nested.nested.level_3 = "N/A" THEN
+                    (SELECT VALUE c.nodeID
+                    FROM ClassificationInfo c
+                    WHERE ci.category.level_0 = c.category.level_0
+                        and ci.category.nested.level_1 = c.category.nested.level_1
+                        and c.category.nested.nested.level_2 = "N/A")
+                WHEN ci.category.nested.nested.nested.nested.level_4 = "N/A" THEN
+                    (SELECT VALUE c.nodeID
+                    FROM ClassificationInfo c
+                    WHERE ci.category.level_0 = c.category.level_0
+                        and ci.category.nested.level_1 = c.category.nested.level_1
+                        and ci.category.nested.nested.level_2 = c.category.nested.nested.level_2
+                        and c.category.nested.nested.nested.level_3 = "N/A")
+                WHEN ci.category.nested.nested.nested.nested.nested.level_5 = "N/A" THEN
+                    (SELECT VALUE c.nodeID
+                    FROM ClassificationInfo c
+                    WHERE ci.category.level_0 = c.category.level_0
+                        and ci.category.nested.level_1 = c.category.nested.level_1
+                        and ci.category.nested.nested.level_2 = c.category.nested.nested.level_2
+                        and ci.category.nested.nested.nested.level_3 = c.category.nested.nested.nested.level_3
+                        and c.category.nested.nested.nested.nested.level_4 = "N/A")                
+                ELSE 
+                    (SELECT VALUE c.nodeID
+                    FROM ClassificationInfo c
+                    WHERE ci.category.level_0 = c.category.level_0 
+                        and ci.category.nested.level_1 = c.category.nested.level_1 
+                        and ci.category.nested.nested.level_2 = c.category.nested.nested.level_2
+                        and ci.category.nested.nested.nested.level_3 = c.category.nested.nested.nested.level_3
+                        and ci.category.nested.nested.nested.nested.level_4 = c.category.nested.nested.nested.nested.level_4
+                        and c.category.nested.nested.nested.nested.nested.level_5 = "N/A")  
+                END AS parents
+        FROM ClassificationInfo ci
+        WHERE ci.nodeID = {};'''.format(nodeID))
