@@ -106,7 +106,7 @@ class AsterixSource(Cacheable):
     def _transform_server_response(self, server_response):
         results = server_response.results
 
-        if results != None:
+        if (results != None) & (len(results) > 0):
             fields = [str(x) for x in results[0].keys()]
         else:
             None
