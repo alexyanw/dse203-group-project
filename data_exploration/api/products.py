@@ -71,41 +71,54 @@ class Products(SqlSource):
                 'sample_size':sample_size,
                 'random_seed':self._random_seed
             })
-    
+
+    @log
     def coPurchases(self, asin, min_date='1900-1-1', max_date=None, sample_size=100 ):
         if len(asin) == 0: 
-            return QueryResponse()
+            return None
         
         max_date_filter = ' AND o.orderdate <= %(max_date)s ' if max_date else ' '
 
-
         query = ('''
-             SELECT
-                p.asin,
-                count(ol.productid) as numPurch
-              FROM products p,
-                  orders o,
-                   orderlines ol
-                   TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(%(random_seed)s)
-              WHERE
-                  o.orderid = ol.orderid
-                  AND o.orderdate > %(min_date)s'''+max_date_filter+'''
-                  AND ol.orderid in 
-                      (
-                          SELECT orid.orderid
-                          FROM (
-                              SELECT orderlines.orderid, orderlines.productid
-                              FROM orderlines, (SELECT products.productid
-                                               FROM products
-                                               WHERE products.asin in %(asin_list)s) as pid)
-                             WHERE orderlines.productid=pid.productid)as orid
-                          WHERE orid.orderid in (SELECT orderlines.orderid
-                                              FROM orderlines
-                                              group by orderlines.orderid having count(orderlines.orderid) >1))
-                    AND ol.productid=p.productid AND p.asin not in %(asin_list)s
-              GROUP BY p.asin
-              ORDER BY numPurch DESC''')
-        return self.execSqlQuery (query,
+            SELECT
+              p.asin,
+              count(ol.productid) as numPurch
+            FROM
+              products p,
+              orderlines ol
+              TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(%(random_seed)s),
+              orders o
+            WHERE
+              o.orderid = ol.orderid
+              AND o.orderdate > %(min_date)s'''+max_date_filter+'''
+              AND ol.orderid in (
+                SELECT orid.orderid
+                FROM (
+                  SELECT
+                    orderlines.orderid,
+                    orderlines.productid
+                  FROM
+                    orderlines,
+                    (
+                      SELECT products.productid
+                      FROM products
+                      WHERE products.asin in %(asin_list)s
+                    ) as pid
+                  WHERE orderlines.productid=pid.productid
+                ) as orid
+                WHERE
+                  orid.orderid in (
+                    SELECT orderlines.orderid
+                    FROM orderlines
+                    GROUP BY orderlines.orderid
+                    having count(orderlines.orderid) >1
+                  )
+              )
+              AND ol.productid=p.productid
+              AND p.asin not in %(asin_list)s
+            GROUP BY p.asin
+            ORDER BY numPurch DESC;''')
+        return self._execSqlQuery (query,
                {
                     'min_date':min_date,
                     'max_date':max_date,
