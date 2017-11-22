@@ -19,26 +19,29 @@ if __name__ == '__main__':
     #print(stats.columns)
     #print(stats.results)
 
-    dist = explorer.products.ratingsDistribution(asin=['0007386648','0002007770'])
-    print(dist.results)
+    # dist = explorer.products.ratingsDistribution(asin=['0007386648','0002007770'])
+    # print(dist.results)
+    #
+    # terms = explorer.reviews.termsByAsin(asin=['0007386648'])
+    # print(terms.columns)
+    # print(terms.results)
+    #
+    #
+    # dist2 = explorer.products.ratingsDistribution(asin=('0007386648', '0002007770'))
+    # print(dist2.results)
+    #
+    # orders = explorer.orders.statsByZipcode()
+    # print(orders.results)
+    #
+    # cat = explorer.categories.search('Architecture', classfication_only=True)
+    # print(cat.results)
+    #
+    # cat = explorer.categories.search('Architecture', classfication_only=True)
+    # print(cat.results)
+    #
+    # terms = explorer.reviews.termsByAsin(asin=['0007386648'])
+    # print(terms.columns)
+    # print(terms.results)
 
-    terms = explorer.reviews.termsByAsin(asin=['0007386648'])
-    print(terms.columns)
-    print(terms.results)
-
-
-    dist2 = explorer.products.ratingsDistribution(asin=('0007386648', '0002007770'))
-    print(dist2.results)
-
-    orders = explorer.orders.statsByZipcode()
-    print(orders.results)
-
-    cat = explorer.categories.search('Architecture', classfication_only=True)
+    cat = explorer.categories.parentsOf(173508)
     print(cat.results)
-
-    cat = explorer.categories.search('Architecture', classfication_only=True)
-    print(cat.results)
-
-    terms = explorer.reviews.termsByAsin(asin=['0007386648'])
-    print(terms.columns)
-    print(terms.results)
