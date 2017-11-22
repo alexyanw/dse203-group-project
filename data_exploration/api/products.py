@@ -126,6 +126,50 @@ class Products(SqlSource):
                     'sample_size':sample_size,
                     'random_seed':self._random_seed
                })
+        
+    @log
+    def clusterQuery(self):
+        query = ( '''
+                SELECT orderlines.productid,
+                    products.asin,
+                    count(*) as num_orders,
+                    avg(regexp_replace(orderlines.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as totalprice_avg,
+                    r.overall,
+                    products.category,
+                    case 
+                        when calendar.month=3 and calendar.dom>=21 then 1
+                        when calendar.month=4 then 1
+                        when calendar.month=5 then 1
+                        when calendar.month=6 and calendar.dom<21 then 1
+                        when calendar.month=6 and calendar.dom>=21 then 2
+                        when calendar.month=7 then 2
+                        when calendar.month=8 then 2
+                        when calendar.month=9 and calendar.dom<23 then 2
+                        when calendar.month=9 and calendar.dom>=23 then 3
+                        when calendar.month=10 then 3
+                        when calendar.month=11 then 3
+                        when calendar.month=12 and calendar.dom<21 then 3
+                        when calendar.month=12 and calendar.dom>=21 then 4
+                        when calendar.month=1 then 4
+                        when calendar.month=2 then 4
+                        when calendar.month=3 and calendar.dom<21 then 4
+                        else 0
+                    end as season
+
+                FROM orderlines
+                    JOIN products
+                      ON orderlines.productid = products.productid
+                    JOIN orders o
+                      ON orderlines.orderid = o.orderid
+                    JOIN reviews r 
+                      ON products.asin=r.asin
+                    JOIN calendar  
+                      ON o.orderdate=calendar.date
+                WHERE orderlines.numunits > 0
+                group by orderlines.productid, products.asin, r.overall, products.category, season''')
+        return self._execSqlQuery(query)
+
+
                                           
         
         
