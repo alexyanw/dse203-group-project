@@ -19,6 +19,6 @@ pip install . --upgrade
 ```python
 from dora.api import DataExplorer
 d = DataExplorer()
-response = d.products.ratingsDitribution()
+response = d.products.ratingsDistribution()
 ```
 
