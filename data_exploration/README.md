@@ -5,7 +5,7 @@
 ### Install
 ```
 git clone https://github.com/j-goldsmith/dse203-group-project.git
-cd /dse203-group-project/data_exploration
+cd dse203-group-project/data_exploration
 pip install .
 ```
 
