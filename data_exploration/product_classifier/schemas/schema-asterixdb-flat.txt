@@ -1,13 +1,40 @@
-use dataverse TinySocial;
-drop dataset ClassificationInfoFlat if exists;
-drop type classificationInfoTypeFlat if exists;
+use bookstore_pr;
 
-create type classificationInfoTypeFlat as open {
-    Classification: string?
-}
+CREATE TYPE ClassificationInfoFlattenedType AS { 
+    classification: string, 
+    node_id: int, 
+    level_0: string, 
+    level_1: string, 
+    level_2: string, 
+    level_3: string, 
+    level_4: string, 
+    level_5: string 
+};
+
+CREATE DATASET ClassificationInfo_Flattened(ClassificationInfoFlattenedType)
+    PRIMARY KEY node_id;
+
+upsert into  ClassificationInfo_Flattened(
+    SELECT
+        ci.classification,
+        ci.nodeID AS node_id,
+        ci.category.level_0 AS level_0,
+        ci.category.nested.level_1 AS level_1,
+        ci.category.nested.nested.level_2 AS level_2,
+        ci.category.nested.nested.nested.level_3 AS level_3,
+        ci.category.nested.nested.nested.nested.level_4 AS level_4,
+        ci.category.nested.nested.nested.nested.nested.level_5 AS level_5
+    FROM ClassificationInfo ci
+);
 
 
-create external dataset ClassificationInfoFlat(classificationInfoTypeFlat)
-    using localfs
-    (("path"="127.0.0.1://data/spreadsheet.csv"),
-    ("format"="delimited-text"));
+SELECT
+    ci.classification,
+    ci.node_id,
+    ci.level_0,
+    ci.level_1,
+    ci.level_2,
+    ci.level_3,
+    ci.level_4,
+    ci.level_5
+FROM ClassificationInfo_Flattened ci;
