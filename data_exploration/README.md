@@ -15,7 +15,7 @@ pip install . --upgrade
 ```
 
 ### In Python
-**product.config must be in the directory with the python code referencing dora**
+**production.config must be in the directory with the python code referencing dora - working on fix for default**
 ```python
 from dora.api import DataExplorer
 d = DataExplorer()
