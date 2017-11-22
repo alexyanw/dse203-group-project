@@ -45,7 +45,7 @@ class SolrConfig(ConfigType):
         return self.get_property('cacheTtl')
 
 class Config(object):
-    def __init__(self, path='.config'):
+    def __init__(self, path='production.config'):
         with open(path) as config_file:
             config = json.load(config_file)
 
