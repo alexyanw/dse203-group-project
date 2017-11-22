@@ -1,9 +1,9 @@
-from orders import *
-from products import *
-from reviews import *
-from categories import *
+from .orders import Orders
+from .products import Products
+from .reviews import Reviews
+from .categories import Categories
 
-from config import Config
+from .config import Config
 
 class DataExplorer:
     def __init__(self,config = Config()):
@@ -19,8 +19,8 @@ if __name__ == '__main__':
     #print(stats.columns)
     #print(stats.results)
 
-    # dist = explorer.products.ratingsDistribution(asin=['0007386648','0002007770'])
-    # print(dist.results)
+    dist = explorer.products.clusterQuery()
+    print(dist.results)
     #
     # terms = explorer.reviews.termsByAsin(asin=['0007386648'])
     # print(terms.columns)
@@ -43,5 +43,5 @@ if __name__ == '__main__':
     # print(terms.columns)
     # print(terms.results)
 
-    cat = explorer.categories.parentsOf(173508)
-    print(cat.results)
+    #cat = explorer.categories.parentsOf(173508)
+    #print(cat.results)

@@ -1,5 +1,5 @@
-from datasources import AsterixSource
-from logger import log
+from .datasources import AsterixSource
+from .logger import log
 
 class Categories(AsterixSource):
 

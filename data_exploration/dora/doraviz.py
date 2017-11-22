@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from dora import DataExplorer
+from .api import DataExplorer
 
 class VizExplorer:
     def _data_from_response(self, x, y, response):

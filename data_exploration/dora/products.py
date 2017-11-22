@@ -1,5 +1,5 @@
-from datasources import SqlSource
-from logger import log
+from .datasources import SqlSource
+from .logger import log
 from datetime import datetime
 
 class Products(SqlSource):
@@ -128,46 +128,28 @@ class Products(SqlSource):
                })
         
     @log
-    def clusterQuery(self):
-        query = ( '''
-                SELECT orderlines.productid,
-                    products.asin,
-                    count(*) as num_orders,
-                    avg(regexp_replace(orderlines.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as totalprice_avg,
-                    r.overall,
-                    products.category,
-                    case 
-                        when calendar.month=3 and calendar.dom>=21 then 1
-                        when calendar.month=4 then 1
-                        when calendar.month=5 then 1
-                        when calendar.month=6 and calendar.dom<21 then 1
-                        when calendar.month=6 and calendar.dom>=21 then 2
-                        when calendar.month=7 then 2
-                        when calendar.month=8 then 2
-                        when calendar.month=9 and calendar.dom<23 then 2
-                        when calendar.month=9 and calendar.dom>=23 then 3
-                        when calendar.month=10 then 3
-                        when calendar.month=11 then 3
-                        when calendar.month=12 and calendar.dom<21 then 3
-                        when calendar.month=12 and calendar.dom>=21 then 4
-                        when calendar.month=1 then 4
-                        when calendar.month=2 then 4
-                        when calendar.month=3 and calendar.dom<21 then 4
-                        else 0
-                    end as season
+    def clusterQuery(self, min_date='1900-1-1', max_date=None):
+        max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
+        query = ('''
+                  SELECT orderlines.productid,
+                      products.asin,
+                      count(*) as num_orders,
+                      avg(regexp_replace(orderlines.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as totalprice_avg,
+                      avg(r.overall),
 
-                FROM orderlines
-                    JOIN products
-                      ON orderlines.productid = products.productid
-                    JOIN orders o
-                      ON orderlines.orderid = o.orderid
-                    JOIN reviews r 
-                      ON products.asin=r.asin
-                    JOIN calendar  
-                      ON o.orderdate=calendar.date
-                WHERE orderlines.numunits > 0
-                group by orderlines.productid, products.asin, r.overall, products.category, season''')
-        return self._execSqlQuery(query)
+                      DATE_PART('day', max(shipdate)::TIMESTAMP - min(shipdate)::TIMESTAMP) as days_on_sale
+                  FROM orderlines
+                      JOIN products
+                        ON orderlines.productid = products.productid
+                      JOIN orders o
+                        ON orderlines.orderid = o.orderid
+                      JOIN reviews r
+                        ON products.asin=r.asin
+                      JOIN calendar
+                        ON o.orderdate=calendar.date
+                  WHERE orderlines.numunits > 0
+                  group by orderlines.productid, products.asin;''')
+        return self._execSqlQuery(query,{})
 
 
                                           
