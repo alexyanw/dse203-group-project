@@ -1,54 +1,69 @@
-from datalog_parser import DatalogParser
 __all__ = ['SQLBuilder']
 
 class SQLBuilder:
-    def __init__(self, q):
-        self.parser = DatalogParser(q)
+    def __init__(self, q, schema=None):
+        self.datalog = q
+        self.schema = schema
+
+    def getColumnName(self, table, col_or_val, full=True):
+        if not self.schema:
+            return col_or_val
+        if col_or_val not in self.datalog['column_idx'][table]:
+            return col_or_val
+        col_idx = self.datalog['column_idx'][table][col_or_val]
+        if full:
+            return table + '.' + self.schema[table].getColumn(table, col_idx)
+        else:
+            return self.schema[table].getColumn(table, col_idx)
 
     def getReturnColumns(self):
         return_columns = []
-        for col in self.parser.cols_to_return:
-            table_name = self.parser.column_names[col]
-            if table_name.find(";") != -1:
-                table_name = table_name.split(";")[0]
-            return_columns.append(table_name + "." + col)
+        for struct in self.datalog['return']:
+            src_col = self.getColumnName(struct['table'], struct['column'], False)
+            str_ret_col = struct['table'] + '.' + src_col 
+            if struct['func']:
+                str_ret_col = struct['func'] + '(' + str_ret_col + ')'
+            if struct['alias']:
+                str_ret_col += ' as ' + struct['alias'] 
+            elif src_col != struct['column']:
+                str_ret_col += ' as ' + struct['column'] 
+            return_columns.append(str_ret_col)
         return ', '.join(return_columns)
 
     def getJoinConditions(self):
-        column_names = self.parser.column_names
+        if not self.datalog['join']: return ''
+        join_columns = self.datalog['join']
         return_str = ""
-        for col in column_names:
-            if column_names[col].find(";") != -1:
-                tables = column_names[col].split(";")
-                base_str = tables[0].strip() + "." + col + "="
-                for table in tables[1:]:
-                    return_str += (base_str + table.strip() + "." + col + " AND ")
+        for col in join_columns:
+            tables = join_columns[col]
+            base_str = self.getColumnName(tables[0], col) + "="
+            for table in tables[1:]:
+                return_str += (base_str + self.getColumnName(table, col) + " AND ")
         return return_str[:-5]
+
+    def getArithmeticConditions(self):
+        arith_conds = []
+        if not self.datalog['conditions']: return arith_conds
+        for table,conditions in self.datalog['conditions'].items():
+            if not conditions: continue
+            for cond in conditions:
+                lop = self.getColumnName(table, cond[0])
+                rop = self.getColumnName(table, cond[2])
+                arith_conds.append("{} {} {}".format(lop, cond[1], rop))
+        return arith_conds
 
     def getQueryCmd(self):
         dbcmd = "SELECT " + self.getReturnColumns() + \
-               " FROM " + ', '.join(self.parser.table_names)
+               "\nFROM " + ', '.join(self.datalog['tables'])
         conditions = []
         join_cond = self.getJoinConditions()
         if join_cond: conditions.append(join_cond)
-        conditions += self.parser.conds
+        conditions += self.getArithmeticConditions()
         if conditions:
-            dbcmd += " WHERE " + ' AND '.join(conditions)
-        dbcmd += " LIMIT 10;"
+            dbcmd += "\nWHERE " + ' AND '.join(conditions)
+        if self.datalog['groupby']:
+            dbcmd += "\nGROUP BY {} ".format(self.getColumnName(self.datalog['groupby']['table'], self.datalog['groupby']['column'])) 
+        if self.datalog['limit']:
+            dbcmd += "\nLIMIT " + self.datalog['limit']
         return dbcmd
 
-    def getTableNames(self):
-        return self.parser.table_names
-
-if __name__ == '__main__':
-    example_datalog = [
-        'Ans(numunits, firstname, billdate, orderid, customerid)',
-        'orders(orderid, customerid, campaignId, orderDate, city, state, zipCode, paymentType, totalPrice, numOrderLines, numUnits)',
-        'customers(customerid, householdId, gender, firstname)',
-        'orderlines(orderLineId, orderid, productId, shipDate, billdate, unitPrice, numunits, totalPrice)',
-        ['orders.orderid > 1000', 'orders.numunits > 1']
-    ]
-    
-    builder = SQLBuilder(example_datalog)
-    sqlcmd = builder.getQueryCmd()
-    print(sqlcmd)

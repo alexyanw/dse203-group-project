@@ -1,8 +1,7 @@
 import re
 from datalog_parser import DatalogParser
-from category import Category
 
-__all__ = ['SQLPPBuilder']
+__all__ = ['SolrUrlBuilder']
 
 class SolrUrlBuilder:
     def __init__(self, q):

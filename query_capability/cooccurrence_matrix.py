@@ -22,7 +22,7 @@ class CoOccurrenceMatrix:
 
     def get_customer_product(self, **kwargs):
         cmd = '''
-SELECT c.customerid, pr.productid, 1 as likes, c.gender as gender, o.orderdate, o.state as orderstate
+SELECT c.customerid, pr.productid, 1 as likes, c.gender as gender, o.orderdate, o.state as orderstate, o.zipcode as zipcode
 FROM customers c, orders o, orderlines ol, products pr
 WHERE o.customerid = c.customerid and ol.orderid = o.orderid and pr.productid = ol.productid
 '''

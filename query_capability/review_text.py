@@ -1,15 +1,11 @@
 import re
-__all__ = ['Category']
+__all__ = ['ReviewText']
 
-class Category:
-    schema = {
-        'CategoryLevel' : ['nodeid', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5'],
-        'CategoryFlat' : ['nodeid', 'category'],
-    }
+class ReviewText:
     def __init__(self):
         self.schema_map = {
-            'CategoryLevel' : (self.get_category_level, ('nodeid', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5')),
-            'CategoryFlat' : (self.get_category_flat, ('nodeid', 'category')),
+            'ReviewTextLevel' : (self.get_category_level, ('nodeID', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5')),
+            'ReviewTextFlat' : (self.get_category_flat, ('nodeID', 'category')),
         }
 
     def get_level_stat(self):
@@ -60,7 +56,7 @@ from ClassificationInfo c
 '''
 
         if 'view' in kwargs:
-            dbcmd = "{} as ({})".format('CategoryLevel', dbcmd)
+            dbcmd = "{} as ({})".format('ReviewTextLevel', dbcmd)
         return dbcmd
     
     def get_category_flat(self, **kwargs):
@@ -75,7 +71,7 @@ c.category.nested.nested.nested.nested.nested.level_5]
 from ClassificationInfo c 
 '''
         if 'view' in kwargs:
-            dbcmd = "{} as ({})".format('CategoryFlat', dbcmd)
+            dbcmd = "{} as ({})".format('ReviewTextFlat', dbcmd)
         return dbcmd
     
     def get_view(self, viewname, **kwargs):
@@ -88,23 +84,16 @@ from ClassificationInfo c
         view_content = func(**kwargs)
         return view_content
 
-    @classmethod
-    def getColumn(cls, table, idx):
-        if table not in cls.schema:
-            print("Required table '{}' doesn't exist\n".format(table))
-            exit(1)
-        return cls.schema[table][idx]
-
     @staticmethod
-    def handleCategoryFlatCategory(column, relation, value):
+    def handleReviewTextFlatReviewText(column, relation, value):
         value = re.sub("'", '', value)
         categories = value.split(';')
         str_cond = ''
         if relation == '=':
-            str_cond = ' AND '.join(["'{}' in CategoryFlat.level".format(cat) for cat in categories])
+            str_cond = ' AND '.join(["'{}' in c.level".format(cat) for cat in categories])
         elif relation == '!=': 
-            str_cond = ' AND '.join(["'{}' not in CategoryFlat.level".format(cat) for cat in categories])
+            str_cond = ' AND '.join(["'{}' not in c.level".format(cat) for cat in categories])
         elif relation == 'in':
-            str_cond = ' OR '.join(["'{}' in CategoryFlat.level".format(cat) for cat in categories])
+            str_cond = ' OR '.join(["'{}' in c.level".format(cat) for cat in categories])
 
         return '(' + str_cond + ')'
