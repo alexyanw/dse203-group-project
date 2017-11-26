@@ -150,6 +150,30 @@ class Products(SqlSource):
                   WHERE orderlines.numunits > 0
                   group by orderlines.productid, products.asin;''')
         return self._execSqlQuery(query,{})
+        
+    @log
+    def clusterProducts(self,n_clusters,algorithm,asin=None):
+        data=self.clusterQuery()
+        data=pd.DataFrame(data, data.columns)
+        if asin is None:
+            input_centers='k-means++'
+            X=data[['num_orders','avgrating','category','days_on_sale']].values
+        else:
+            #input_centers=data.loc[data['asin'].isin([%(asin_list)s])]
+            input_centers=data.loc[data['asin'].isin([(asin)])]
+            input_centers=input_centers[['num_orders','avgrating','category','days_on_sale']].values
+            #X=data.loc[~data['asin'].isin([%(asin_list)])]
+            X=data.loc[~data['asin'].isin([(asin_list)])]
+            X=X[['num_orders','avgrating','category','days_on_sale']].values
+        X=StandardScaler().fit_transform(X)
+        #algorithm=KMeans(n_clusters=%(n_clusters), algorithm=%(algorithm),init=input_centers)
+        algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers)
+        algorithm.fit_predict(X)
+        y_pred=algorithm.labels_
+        prodid=data[['productid']]
+        clustering=zip(prodid,y_pred)
+        
+        return clustering
 
 
                                           
