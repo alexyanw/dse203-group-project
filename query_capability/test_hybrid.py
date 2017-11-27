@@ -14,7 +14,7 @@ datalog1 = [
 ]
 
 # single source with column renaming
-datalog = [
+datalog2 = [
     {
     'result': 'Ans(nunits, fname, date, oid, customerid)',
     'table': ['postgres.orders(oid, customerid, _, _, _, _, _, _, _, _, _)',
@@ -26,7 +26,7 @@ datalog = [
     }
 ]
 # multi source join
-datalog = [
+datalog3 = [
     {
     'result': 'Ans(pid, nunits, date, asin, nodeid)',
     'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
@@ -41,7 +41,7 @@ datalog = [
 
 # single source aggregation
 #q(X, A) :- setof({Z}, {Y }, p(X, Y, Z), S), count(S, A)
-datalog = [
+datalog4 = [
     {
     'result': 'Ans(pid, total_orders, total_value)',
     'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
@@ -73,6 +73,10 @@ datalog = [
 # view
 
 engine = HybridEngine()
+#engine = HybridEngine(
+#                postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook'},
+#                asterix= {'server': 'localhost', 'port': 19002},
+#                solr= {'server': 'localhost', 'port': 8983})
 #result = engine.queryDatalog(datalog, debug=True)
 result = engine.queryDatalog(datalog)
 print(result)
