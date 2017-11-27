@@ -40,7 +40,8 @@
 <big>Recommendation App</big>
 </header>
 <nav>
-<p>Categories</p>
+<p>Filters</p>
+<hr>
 {{ sidebar_ahref|safe }}
 </nav>
 <article>
@@ -54,13 +55,14 @@
 <p>Demographic: {{ get_demoid }}</p>
 <p>Purchases: {{ get_purchases }}</p>
 <hr>
-<h2>Predict</h2>
+<h2>Recommend</h2>
 <p>Collaborative Filtering Rec: {{ get_collabrec }}</p>
 <p>Content Filtering Rec: {{ get_contentrec }}</p>
 <p>Hybrid Rec: {{ get_hybridrec }}</p>
 <hr>
 <h2>Books in Category</h2>
-<p>Items:</p>
+<p>Number: {{ get_book_num }}</p>
+<p>List: {{ get_book_list }}</p>
 </article>
 </body>
 </div>
