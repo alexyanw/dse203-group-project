@@ -19,9 +19,9 @@ class QueryResponse:
 
 class AsterixEngine:
     def __init__(self, cfg={}):
-        self._server = cfg.get('server', 'http://localhost')
+        self._server = cfg.get('server', 'localhost')
         self._port = cfg.get('port', 19002)
-        self.dburl = self._server + ':' + str(self._port) + '/query/service'
+        self.dburl = 'http://' + self._server + ':' + str(self._port) + '/query/service'
         self.schema_wrapper = {
             'CategoryLevel': Category,
             'CategoryFlat': Category,

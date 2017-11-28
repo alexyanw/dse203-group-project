@@ -6,6 +6,8 @@
 * cust_item_matrix.npy - customer x purchase matrix
 * demo_matrix.npy - customer x demographics matrix
 * dict_dir.npy - categories directory structure
+* asin.npy - asin lookup
+* season_price_instock_indexed.npy - asin x (season, price, instock) matrix
 
 2. Make sure flask is installed
 

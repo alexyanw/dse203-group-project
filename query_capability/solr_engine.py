@@ -15,11 +15,12 @@ class SolrResponse:
         self.metrics = self._json['metrics'] if 'metrics' in self._json else None
 
 class SolrEngine:
-    def __init__(self, server = 'localhost', port = 8983):
-        self._server = server
-        self._port = port
+    def __init__(self, cfg={}):
+        self._server = cfg.get('server', 'localhost')
+        self._port = cfg.get('port', 8983)
+        self._database = cfg.get('database', 'bookstore')
         core_name = "bookstore"
-        self.baseurl = "http://" + server + ":" + str(port) + "/solr/" + core_name 
+        self.baseurl = "http://" + self._server + ":" + str(self._port) + "/solr/" + self._database
 
         self.schema_wrapper = {
             'review_text': ReviewText,
