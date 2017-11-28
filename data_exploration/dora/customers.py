@@ -65,7 +65,7 @@ class Customers(SqlSource):
                           sum(o.totalprice) as TotalSpent
                   FROM customers c, orders o
                   WHERE c.customerid!=0 AND o.customerid=c.customerid 
-                  GROUP BY c.gender, c.householdid, o.zipcode
+                  GROUP BY c.gender, c.householdid, o.zipcode, c.firstname
                   ORDER BY numOrders desc''')
         return self._execSqlQuery(query,
               {
@@ -100,14 +100,24 @@ class Customers(SqlSource):
              that customer.
         """
         
-        data=self.clusterQuery()
-        data=pd.DataFrame(data, data.columns)
-        X=data[['numOrders, gender, zipcode, TotalSpent']].values
+        response=self.clusterQuery()
+        data=pd.DataFrame(response.results, columns=response.columns)
+        mask = (data['zipcode'].str.len()>=5) & (data['zipcode'].str.len()<7 
+                                              & (data['zipcode'].str.isnumberic())
+        data = data.loc[mask]
+        data.loc[data.gender=='F','gender']=1
+        data.loc[data.gender=='M','gender']=0
+        data.loc[data.gender=='','gender']=2
+        data['zipcode']=data['zipcode'].apply(pd.to_numeric)
+        X=data[['numOrders', 'gender', 'zipcode', 'TotalSpent']].values
+        for i in range(len(X)):
+            X[i][3]=X[i][3].replace(",", "")
+            X[i][3]=float(X[i][3].strip('$'))
         X=StandardScaler().fit_transform(X)
-        algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm))
+        algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init))
         algorithm.fit_predict(X)
         y_pred=algorithm.labels_
-        customer=data[['householdid','firstname']]
+        customer=data[['householdid','gender']]
         clustering=zip(customer,y_pred)
         
         return clustering
