@@ -215,10 +215,11 @@ class Products(SqlSource):
             X=data[['num_orders','avgrating','category','days_on_sale']].values
         else:
             #input_centers=data.loc[data['asin'].isin([%(asin_list)s])]
-            input_centers=data.loc[data['asin'].isin([(asin)])]
+            asin_s=set(asin)
+            input_centers=data[data['asin'].isin(asin)]
             input_centers=input_centers[['num_orders','avgrating','category','days_on_sale']].values
             #X=data.loc[~data['asin'].isin([%(asin_list)])]
-            X=data.loc[~data['asin'].isin([(asin_list)])]
+            X=data[~data['asin'].isin(asin)]
             X=X[['num_orders','avgrating','category','days_on_sale']].values
         X=StandardScaler().fit_transform(X)
         #algorithm=KMeans(n_clusters=%(n_clusters), algorithm=%(algorithm),init=input_centers)

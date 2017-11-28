@@ -37,13 +37,15 @@ class Customers(SqlSource):
                 customers.householdid={}'''.format(householdID))
     
     @log
-    def clusterQuery(self,min_date='1900-1-1', max_date=None):
+    def clusterQuery(self,min_date='1900-1-1', max_date=None, sample_size=100):
         """For each customer, find the number of books orders, gender, zipcode, household,
            first name, and total spend on books. 
 
         Args:
+            min_date (string): optional. date. Limits the search result timeframe.
             max_date (string): optional. date. Limits the timeframe for which 
             customers results will be returned
+            sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
              tuple(numOrders, gender, zipcode, householdid, firstname, TotalSpent): numOrders 
@@ -65,19 +67,32 @@ class Customers(SqlSource):
                   WHERE c.customerid!=0 AND o.customerid=c.customerid 
                   GROUP BY c.gender, c.householdid, o.zipcode
                   ORDER BY numOrders desc''')
-        return self._execSqlQuery(query)
+        return self._execSqlQuery(query,
+              {
+                    'min_date':min_date,
+                    'max_date':max_date,
+                    'sample_size':sample_size,
+                    'random_seed':self._random_seed
+               })
     
     @log
-    def clusterCustomers(self,n_clusters,algorithm):
+    def clusterCustomers(self,n_clusters=0,algorithm='auto', init='k-means++'):
         """Clusters the customers together based on gender, zipcode, numOrders, and TotalSpent. 
 
         Args:
-            n_clusters (int): required. The number of clusters to form as well 
-            as the number of centroids to generate.
-            algorithm (string): required. “auto”, “full” or “elkan”. K-means algorithm to use. 
-            The classical EM-style algorithm is “full”. The “elkan” variation is more efficient 
-            by using the triangle inequality, but currently doesn’t support sparse data. “auto” 
-            chooses “elkan” for dense data and “full” for sparse data.
+            num_clusters (int): optional. default=8 The number of clusters to form as well as 
+            the number of centroids to generate.
+            algorithm (string): optional. “auto”, “full” or “elkan”, default=”auto”. K-means algorithm 
+            to use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient
+            by using the triangle inequality, but currently doesn’t support sparse data. “auto” chooses
+            “elkan” for dense data and “full” for sparse data.
+            init (string): optional. {‘k-means++’, ‘random’ or an ndarray}. Method for initialization,
+            defaults to ‘k-means++’:‘k-means++’ : selects initial cluster centers for k-mean 
+            clustering in a smart way to speed up convergence. See section Notes in k_init for more
+            details.
+            ‘random’: choose k observations (rows) at random from data for the initial centroids.
+            If an ndarray is passed, it should be of shape (n_clusters, n_features) and gives the 
+            initial centers.
         
         Returns:
              tuple(householdid, firstname, y_pred): householdid is the customer's hosuehold
