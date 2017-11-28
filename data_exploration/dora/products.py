@@ -260,7 +260,7 @@ class Products(SqlSource):
                           sum(o.totalprice) as TotalSpent
                   FROM customers c, orders o
                   WHERE c.customerid!=0 AND o.customerid=c.customerid 
-                  GROUP BY c.gender, c.householdid, o.zipcode
+                  GROUP BY c.gender, c.householdid, o.zipcode, c.firstname
                   ORDER BY numOrders desc''')
         return self._execSqlQuery(query,
               {
