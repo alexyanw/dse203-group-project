@@ -1,7 +1,9 @@
 from .datasources import SqlSource
 from .logger import log
 from datetime import datetime
-
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 class Products(SqlSource):
     @log
@@ -219,15 +221,15 @@ class Products(SqlSource):
             input_centers=data[data['asin'].isin(asin)]
             input_centers=input_centers[['num_orders','avgrating','category','days_on_sale']].values
             #X=data.loc[~data['asin'].isin([%(asin_list)])]
-            X=data[~data['asin'].isin(asin)]
-            X=X[['num_orders','avgrating','category','days_on_sale']].values
+            data=data[~data['asin'].isin(asin)]
+            X=data[['num_orders','avgrating','category','days_on_sale']].values
         X=StandardScaler().fit_transform(X)
         #algorithm=KMeans(n_clusters=%(n_clusters), algorithm=%(algorithm),init=input_centers)
         algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers)
         algorithm.fit_predict(X)
         y_pred=algorithm.labels_
         clustering=data[['productid','asin']]
-        clustering['y_pred']=y_pred
+        clustering.loc[:,'y_pred']=y_pred
         
         return clustering
     
@@ -259,7 +261,7 @@ class Products(SqlSource):
                           c.firstname,
                           sum(o.totalprice) as TotalSpent
                   FROM customers c, orders o
-                  WHERE c.customerid!=0 AND o.customerid=c.customerid 
+                  WHERE c.customerid!=0 AND o.customerid=c.customerid
                   GROUP BY c.gender, c.householdid, o.zipcode, c.firstname
                   ORDER BY numOrders desc''')
         return self._execSqlQuery(query,
