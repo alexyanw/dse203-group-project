@@ -1,4 +1,5 @@
 import json
+import os
 
 class ConfigType(object):
     def __init__(self, d):
@@ -46,6 +47,9 @@ class SolrConfig(ConfigType):
 
 class Config(object):
     def __init__(self, path='production.config'):
+        if not os.path.exists(path):
+            path = os.path.join(os.path.dirname(__file__), 'default.config')
+
         with open(path) as config_file:
             config = json.load(config_file)
 
