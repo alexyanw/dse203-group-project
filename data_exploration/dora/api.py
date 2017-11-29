@@ -2,6 +2,7 @@ from .orders import Orders
 from .products import Products
 from .reviews import Reviews
 from .categories import Categories
+from .customers import Customers
 
 from .config import Config
 
@@ -11,6 +12,7 @@ class DataExplorer:
         self.reviews = Reviews(config.sql_config, config.solr_config)
         self.orders = Orders(config.sql_config)
         self.categories = Categories(config.asterix_config)
+        self.customers = Customers(config.sql_config)
 
 
 if __name__ == '__main__':
