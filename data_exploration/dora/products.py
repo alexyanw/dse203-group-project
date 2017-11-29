@@ -1,7 +1,9 @@
 from .datasources import SqlSource
 from .logger import log
 from datetime import datetime
-
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 class Products(SqlSource):
     @log
@@ -219,58 +221,19 @@ class Products(SqlSource):
             input_centers=data[data['asin'].isin(asin)]
             input_centers=input_centers[['num_orders','avgrating','category','days_on_sale']].values
             #X=data.loc[~data['asin'].isin([%(asin_list)])]
-            X=data[~data['asin'].isin(asin)]
-            X=X[['num_orders','avgrating','category','days_on_sale']].values
+            data=data[~data['asin'].isin(asin)]
+            X=data[['num_orders','avgrating','category','days_on_sale']].values
         X=StandardScaler().fit_transform(X)
         #algorithm=KMeans(n_clusters=%(n_clusters), algorithm=%(algorithm),init=input_centers)
         algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers)
         algorithm.fit_predict(X)
         y_pred=algorithm.labels_
         clustering=data[['productid','asin']]
-        clustering['y_pred']=y_pred
+        clustering.loc[:,'y_pred']=y_pred
         
         return clustering
     
-    @log
-    def clusterQueryCustomers(self,min_date='1900-1-1', max_date=None, sample_size=100):
-        """For each customer, find the number of books orders, gender, zipcode, household,
-           first name, and total spend on books. 
-
-        Args:
-            min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
-            sample_size (int): optional. Percentage of the data the query will run over.
-        
-        Returns:
-             tuple(numOrders, gender, zipcode, householdid, firstname, TotalSpent): numOrders 
-             is the number of times a customer has purchased a book. gender is the gender of the 
-             customer. zipcode identifiies the customers location. householdid is the customer's 
-             hosuehold identification. firstname is the customer's name. TotalSpent is the total 
-             amount the customer has spent on books. 
-        """
-        
-        max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
-        query = ( '''
-                  SELECT count(o.orderid) as numOrders, 
-                          c.gender, 
-                          o.zipcode,
-                          c.householdid,
-                          c.firstname,
-                          sum(o.totalprice) as TotalSpent
-                  FROM customers c, orders o
-                  WHERE c.customerid!=0 AND o.customerid=c.customerid 
-                  GROUP BY c.gender, c.householdid, o.zipcode, c.firstname
-                  ORDER BY numOrders desc''')
-        return self._execSqlQuery(query,
-              {
-                    'min_date':min_date,
-                    'max_date':max_date,
-                    'sample_size':sample_size,
-                    'random_seed':self._random_seed
-               })
-
-
+    
                                           
         
         

@@ -105,14 +105,13 @@ class Customers(SqlSource):
         
         response=self.clusterQuery()
         data=pd.DataFrame(response.results, columns=response.columns)
-        mask = (data['zipcode'].str.len()>=5) & (data['zipcode'].str.len()<7 
-                                              & (data['zipcode'].str.isnumberic()))
+        mask = (data['zipcode'].str.len()>=5) & (data['zipcode'].str.len()<7) & (data['zipcode'].str.isnumeric())
         data = data.loc[mask]
         data.loc[data.gender=='F','gender']=1
         data.loc[data.gender=='M','gender']=0
         data.loc[data.gender=='','gender']=2
         data['zipcode']=data['zipcode'].apply(pd.to_numeric)
-        X=data[['numOrders', 'gender', 'zipcode', 'TotalSpent']].values
+        X=data[['numorders', 'gender', 'zipcode', 'totalspent']].values
         for i in range(len(X)):
             X[i][3]=X[i][3].replace(",", "")
             X[i][3]=float(X[i][3].strip('$'))
@@ -120,7 +119,7 @@ class Customers(SqlSource):
         algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init))
         algorithm.fit_predict(X)
         y_pred=algorithm.labels_
-        customer=data[['householdid','gender']]
-        clustering=zip(customer,y_pred)
-        
+        clustering=data[['householdid','gender']]
+        clustering.loc[:,'y_pred']=y_pred
+
         return clustering
