@@ -6,7 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = Dora-DataExplorationAPI
 SOURCEDIR     = source
-BUILDDIR      = build
+BUILDDIR      = ../../../dora-docs
 
 # Put it first so that "make" without argument is like "make help".
 help:
