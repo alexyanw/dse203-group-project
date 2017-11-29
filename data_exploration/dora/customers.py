@@ -1,6 +1,9 @@
 from .datasources import SqlSource
 from .logger import log
 from datetime import datetime
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 class Customers(SqlSource):
 
@@ -103,7 +106,7 @@ class Customers(SqlSource):
         response=self.clusterQuery()
         data=pd.DataFrame(response.results, columns=response.columns)
         mask = (data['zipcode'].str.len()>=5) & (data['zipcode'].str.len()<7 
-                                              & (data['zipcode'].str.isnumberic())
+                                              & (data['zipcode'].str.isnumberic()))
         data = data.loc[mask]
         data.loc[data.gender=='F','gender']=1
         data.loc[data.gender=='M','gender']=0
