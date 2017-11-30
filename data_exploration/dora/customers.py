@@ -65,37 +65,37 @@ class Customers(SqlSource):
                             else ' ')
 
         query = ('''
-            SELECT
-                count(o.orderid) as numOrders,
-                CASE
-                    WHEN c.gender = 'M'
-                    THEN 0
-                    WHEN c.gender = 'F'
-                    THEN 1
-                    ELSE 2
-                END AS gender,
-                o.zipcode::integer,
-                sum(regexp_replace(o.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as TotalSpent,
-                c.householdid,
-                c.firstname
-            FROM
-                customers c,
-                orders o
-            WHERE
-                c.customerid!=0
-                AND LENGTH(o.zipcode) >= 5
-                AND LENGTH(o.zipcode) < 7
-                AND o.zipcode  ~ '^\d+(.\d+)?$'
-                AND o.orderdate >= %(min_date)s'''
-                 + household_filter
-                 + max_date_filter
-            + '''GROUP BY
-                    c.gender,
+              SELECT
+                    count(o.orderid) as numOrders,
+                    CASE
+                        WHEN c.gender = 'M'
+                        THEN 0
+                        WHEN c.gender = 'F'
+                        THEN 1
+                        ELSE 2
+                    END AS gender,
+                    TRIM(o.zipcode)::NUMERIC as zipcode,
+                    sum(regexp_replace(o.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as TotalSpent,
                     c.householdid,
-                    o.zipcode,
                     c.firstname
-            ORDER BY numOrders desc''')
-
+                FROM
+                    customers c,
+                    orders o
+                WHERE
+                    c.customerid!=0
+                    AND o.customerid=c.customerid
+                    AND LENGTH(trim(o.zipcode)) >= 5
+                    AND LENGTH(trim(o.zipcode)) < 7
+                    AND trim(o.zipcode)  ~ '^\d+$' '''
+                    + household_filter
+                    + max_date_filter
+                    + '''
+                GROUP BY
+                        c.gender,
+                        c.householdid,
+                        trim(o.zipcode),
+                        c.firstname
+                ORDER BY numOrders desc''')
         return self._execSqlQuery(query,
               {
                   'min_date': min_date,
@@ -140,12 +140,13 @@ class Customers(SqlSource):
         """
         if feature_set is None:
             feature_set = self.statsByCustomer()
+        if (not hasattr(feature_set, 'results')) | (not hasattr(feature_set, 'columns')):
+            raise Exception('invalid feature set, no results or columns')
 
-        if ('results' not in feature_set.keys()) | ('columns' not in feature_set.keys()):
-            raise 'invalid feature set, no results or columns'
+        response_columns = feature_set.columns + ['cluster']
 
         data = pd.DataFrame(feature_set.results, columns=feature_set.columns)
-        response_columns = feature_set.columns + ['cluster']
+        data[cluster_on] = data[cluster_on].apply(pd.to_numeric, errors='coerce', axis=1)
 
         X = (
             data[cluster_on].values
@@ -155,6 +156,8 @@ class Customers(SqlSource):
 
         clustering = pd.DataFrame(X, columns=cluster_on)
 
+        print(clustering.dtypes)
+        print(clustering.head())
         algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init))
         algorithm.fit_predict(X)
 
