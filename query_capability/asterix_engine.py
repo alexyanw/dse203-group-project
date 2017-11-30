@@ -19,8 +19,9 @@ class QueryResponse:
 
 class AsterixEngine:
     def __init__(self, cfg={}):
-        self._server = cfg.get('server', 'localhost')
+        self._server = cfg.get('server', '132.249.238.32')
         self._port = cfg.get('port', 19002)
+        self._dataverse = cfg.get('dataverse', 'bookstore_pr')
         self.dburl = 'http://' + self._server + ':' + str(self._port) + '/query/service'
         self.schema_wrapper = {
             'CategoryLevel': Category,
@@ -59,7 +60,7 @@ class AsterixEngine:
         sqlppcmd = builder.getQueryCmd(self.special_handler)
 
         if views:
-            sqlppcmd = "use TinySocial;\nWITH {}\n{}".format(",\n".join(views), sqlppcmd)
+            sqlppcmd = "use {};\nWITH {}\n{}".format(self._dataverse, ",\n".join(views), sqlppcmd)
 
         results = self.execute(sqlppcmd, **kwargs)
         if 'debug' in kwargs: return results
