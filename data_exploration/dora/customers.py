@@ -1,23 +1,23 @@
-from .datasources import SqlSource
+from .datasources import SqlSource, QueryResponse
 from .logger import log
 from datetime import datetime
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-class Customers(SqlSource):
 
+class Customers(SqlSource):
     def statsByHousehold(self, min_date=None, max_date=None, sample_size=100, order_by='TotalOrders'):
         return self._execSqlQuery('''
-	    SELECT
-	        customers.householdid as HouseholdID,
+            SELECT
+                customers.householdid as HouseholdID,
                 sum(orders.totalprice) as TotalSpent,
-	        count(orders) as TotalOrders,
+                count(orders) as TotalOrders,
                 min(orderdate) as first_order,
                 max(orderdate) as last_order,
                 age(min(orderdate)) as time_as_customer,
                 age(max(orderdate)) as time_since_last_order
-            FROM orders, customers 
+            FROM orders, customers
             WHERE orders.customerid=customers.customerid and customers.customerid != 0
             GROUP BY HouseholdID order by {} DESC'''.format(order_by))
 
@@ -38,9 +38,9 @@ class Customers(SqlSource):
                 orderlines.orderid = orders.orderid AND
                 orders.customerid = customers.customerid AND
                 customers.householdid={}'''.format(householdID))
-    
+
     @log
-    def statsByCustomer(self,min_date='1900-1-1', max_date=None,householdid=None, sample_size=100):
+    def statsByCustomer(self, min_date='1900-1-1', max_date=None, householdid=[], sample_size=100):
         """For each customer, find the number of books orders, gender, zipcode, household,
            first name, and total spend on books. 
 
@@ -48,7 +48,7 @@ class Customers(SqlSource):
             min_date (string): optional. date. Limits the search result timeframe.
             max_date (string): optional. date. Limits the timeframe for which 
             customers results will be returned
-            householdid (tuple): optional. householdids that will be excluded from the query results.
+            householdid (list): optional. householdids that will be excluded from the query results.
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
@@ -58,57 +58,67 @@ class Customers(SqlSource):
              hosuehold identification. firstname is the customer's name. TotalSpent is the total 
              amount the customer has spent on books. 
         """
-        
-        max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
-        if householdid==None:
-            query = ( '''
-                      SELECT count(o.orderid) as numOrders, 
-                              c.gender, 
-                              o.zipcode,
-                              c.householdid,
-                              c.firstname,
-                              sum(o.totalprice) as TotalSpent
-                      FROM customers c, orders o
-                      WHERE c.customerid!=0 AND o.customerid=c.customerid 
-                      GROUP BY c.gender, c.householdid, o.zipcode, c.firstname
-                      ORDER BY numOrders desc''')
-            return self._execSqlQuery(query,
-                  {
-                        'min_date':min_date,
-                        'max_date':max_date,
-                        'sample_size':sample_size,
-                        'random_seed':self._random_seed
-                   })
-        else:
-            query = ( '''
-                      SELECT count(o.orderid) as numOrders, 
-                              c.gender, 
-                              o.zipcode,
-                              c.householdid,
-                              c.firstname,
-                              sum(o.totalprice) as TotalSpent
-                      FROM customers c, orders o
-                      WHERE c.customerid!=0 AND o.customerid=c.customerid
-                            AND c.householdid not in %(householdid_list)s
-                      GROUP BY c.gender, c.householdid, o.zipcode, c.firstname
-                      ORDER BY numOrders desc''')            
-            return self._execSqlQuery(query,
-                  {
-                        'min_date':min_date,
-                        'max_date':max_date,
-                        'householdid_list':tuple(householdid),
-                        'sample_size':sample_size,
-                        'random_seed':self._random_seed
-                   })
-    
+
+        max_date_filter = ' AND o.orderdate <= %(max_date)s ' if max_date else ' '
+        household_filter = (' AND c.householdid not in %(householdid_list)s '
+                            if (householdid is not None) & (len(householdid) > 0)
+                            else ' ')
+
+        query = ('''
+            SELECT
+                count(o.orderid) as numOrders,
+                CASE
+                    WHEN c.gender = 'M'
+                    THEN 0
+                    WHEN c.gender = 'F'
+                    THEN 1
+                    ELSE 2
+                END AS gender
+                o.zipcode::integer,
+                sum(regexp_replace(o.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as TotalSpent,
+                c.householdid,
+                c.firstname
+            FROM
+                customers c,
+                orders o
+            WHERE
+                c.customerid!=0
+                AND LEN(o.zipcode) >= 5
+                AND LEN(o.zipcode) < 7
+                AND ISNUMERIC(o.zipcode) = 1
+                AND o.customerid=c.customerid
+                AND o.orderdate >= %(min_date)s'''
+                 + household_filter
+                 + max_date_filter
+                 + '''GROUP BY
+                    c.gender,
+                    c.householdid,
+                    o.zipcode,
+                    c.firstname
+            ORDER BY numOrders desc''')
+
+        return self._execSqlQuery(query,
+              {
+                  'min_date': min_date,
+                  'max_date': max_date,
+                  'householdid_list': tuple(householdid),
+                  'sample_size': sample_size,
+                  'random_seed': self._random_seed
+              })
+
     @log
-    def clusterCustomers(self,data,col,n_clusters=0,algorithm='auto', init='k-means++'):
+    def clusterCustomers(self,
+                         feature_set=None,
+                         n_clusters=0,
+                         algorithm='auto',
+                         init='k-means++',
+                         cluster_on=['numorders', 'gender', 'zipcode', 'totalspent'],
+                         scale=False):
         """Clusters the customers together based on gender, zipcode, numOrders, and TotalSpent. 
 
         Args:
-            data (array, QueryResponse): required. The features that will be clustered.
-            col (array, QueryResponse): required. The columns of the features.
-            num_clusters (int): optional. default=8 The number of clusters to form as well as 
+            feature_set (QueryResponse or dictionary): optional. must have keys 'results' and 'columns'. Data that will be clustered.
+            num_clusters (int): optional. default=8 The number of clusters to form as well as
             the number of centroids to generate.
             algorithm (string): optional. “auto”, “full” or “elkan”, default=”auto”. K-means algorithm 
             to use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient
@@ -121,6 +131,7 @@ class Customers(SqlSource):
             ‘random’: choose k observations (rows) at random from data for the initial centroids.
             If an ndarray is passed, it should be of shape (n_clusters, n_features) and gives the 
             initial centers.
+            cluster_on (list of str): column names to use as cluster features
         
         Returns:
              tuple(clusteringScaled, clustering, centers): clusteringScaled is a dataframe of the
@@ -128,32 +139,37 @@ class Customers(SqlSource):
              of the data and has a y_pred column which is the cluster label for the customer. centers 
              is an array of the cluster centers.
         """
-        if len(data)==0 and len(col)==0:
-            response=self.statsByCustomer()
-            data=pd.DataFrame(response.results, columns=response.columns)
-        else:
-            data=pd.DataFrame(data,columns=col)
-        mask = (data['zipcode'].str.len()>=5) & (data['zipcode'].str.len()<7) & (data['zipcode'].str.isnumeric())
-        data = data.loc[mask]
-        data.loc[data.gender=='F','gender']=1
-        data.loc[data.gender=='M','gender']=0
-        data.loc[data.gender=='','gender']=2
-        data['zipcode']=data['zipcode'].apply(pd.to_numeric)
-        X=data[['numorders', 'gender', 'zipcode', 'totalspent']].values
-        for i in range(len(X)):
-            X[i][3]=X[i][3].replace(",", "")
-            X[i][3]=float(X[i][3].strip('$'))
-        clustering=pd.DataFrame(X, columns=['numorders', 'gender', 'zipcode', 'totalspent'])
-        X=StandardScaler().fit_transform(X)
-        algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init))
-        algorithm.fit_predict(X)
-        y_pred=algorithm.labels_
-        clusteringScaled=pd.DataFrame(X, columns=['numorders', 'gender', 'zipcode', 'totalspent'])
-        clusteringScaled.loc[:,'householdid']=data['householdid']
-        clustering.loc[:,'householdid']=data['householdid']
-        #clustering=data[['householdid','gender','totalspent','zipcode','numorders']]
-        clusteringScaled.loc[:,'y_pred']=y_pred
-        clustering.loc[:,'y_pred']=y_pred
-        centers=algorithm.cluster_centers_
+        if feature_set is None:
+            feature_set = self.statsByCustomer()
 
-        return clusteringScaled, clustering, centers
+        if ('results' not in feature_set.keys()) | ('columns' not in feature_set.keys()):
+            raise 'invalid feature set, no results or columns'
+
+        data = pd.DataFrame(feature_set.results, columns=feature_set.columns)
+        response_columns = feature_set.columns + ['cluster']
+
+        X = (
+            data[cluster_on].values
+            if scale is False
+            else StandardScaler().fit_transform(data[cluster_on].values)
+        )
+
+        clustering = pd.DataFrame(X, columns=cluster_on)
+
+        algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init))
+        algorithm.fit_predict(X)
+
+        for col in feature_set.columns:
+            if col not in clustering.columns.values:
+                clustering.loc[:, col] = data[col]
+
+        clustering.loc[:, 'cluster'] = algorithm.labels_
+
+        centers = algorithm.cluster_centers_
+
+        response = QueryResponse(
+            columns=response_columns,
+            results=[tuple(x) for x in clustering.values]
+        )
+
+        return response
