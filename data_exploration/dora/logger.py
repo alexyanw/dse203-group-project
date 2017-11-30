@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from functools import wraps
 
 def log(f):
     _log_file = '.log'
@@ -8,6 +9,7 @@ def log(f):
         l = open(_log_file, "w")
         l.close()
 
+    @wraps(f)
     def wrap(self, *args, **kwargs):
         line = f.__qualname__ + ',' + str(args) + ',' + str(kwargs) + ',' + str(datetime.now())
         result = f(self, *args, **kwargs)

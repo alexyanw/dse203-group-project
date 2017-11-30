@@ -1,0 +1,612 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dora package &#8212; Dora - Data Exploration API .1 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Dora - Data Exploration API .1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dora-package">
+<h1>dora package<a class="headerlink" href="#dora-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-dora.api">
+<span id="dora-api-module"></span><h2>dora.api module<a class="headerlink" href="#module-dora.api" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.api.DataExplorer">
+<em class="property">class </em><code class="descclassname">dora.api.</code><code class="descname">DataExplorer</code><span class="sig-paren">(</span><em>config=&lt;dora.config.Config object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.api.DataExplorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.categories">
+<span id="dora-categories-module"></span><h2>dora.categories module<a class="headerlink" href="#module-dora.categories" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.categories.Categories">
+<em class="property">class </em><code class="descclassname">dora.categories.</code><code class="descname">Categories</code><span class="sig-paren">(</span><em>asterix_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.categories.Categories" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.AsterixSource" title="dora.datasources.AsterixSource"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.AsterixSource</span></code></a></p>
+<dl class="method">
+<dt id="dora.categories.Categories.parentOf_depth1">
+<code class="descname">parentOf_depth1</code><span class="sig-paren">(</span><em>node_id</em>, <em>depth=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.categories.Categories.parentOf_depth1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dora.categories.Categories.parentsOf">
+<code class="descname">parentsOf</code><span class="sig-paren">(</span><em>node_id</em>, <em>depth=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.categories.Categories.parentsOf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dora.categories.Categories.search">
+<code class="descname">search</code><span class="sig-paren">(</span><em>string_search=''</em>, <em>classfication_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.categories.Categories.search" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.config">
+<span id="dora-config-module"></span><h2>dora.config module<a class="headerlink" href="#module-dora.config" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.config.AsterixConfig">
+<em class="property">class </em><code class="descclassname">dora.config.</code><code class="descname">AsterixConfig</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.config.AsterixConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.config.ConfigType" title="dora.config.ConfigType"><code class="xref py py-class docutils literal"><span class="pre">dora.config.ConfigType</span></code></a></p>
+<dl class="attribute">
+<dt id="dora.config.AsterixConfig.cache_ttl">
+<code class="descname">cache_ttl</code><a class="headerlink" href="#dora.config.AsterixConfig.cache_ttl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dora.config.AsterixConfig.collection">
+<code class="descname">collection</code><a class="headerlink" href="#dora.config.AsterixConfig.collection" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dora.config.AsterixConfig.host">
+<code class="descname">host</code><a class="headerlink" href="#dora.config.AsterixConfig.host" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.config.Config">
+<em class="property">class </em><code class="descclassname">dora.config.</code><code class="descname">Config</code><span class="sig-paren">(</span><em>path='production.config'</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.config.Config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.config.ConfigType">
+<em class="property">class </em><code class="descclassname">dora.config.</code><code class="descname">ConfigType</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.config.ConfigType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="dora.config.ConfigType.get_property">
+<code class="descname">get_property</code><span class="sig-paren">(</span><em>property_name</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.config.ConfigType.get_property" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.config.SolrConfig">
+<em class="property">class </em><code class="descclassname">dora.config.</code><code class="descname">SolrConfig</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.config.SolrConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.config.ConfigType" title="dora.config.ConfigType"><code class="xref py py-class docutils literal"><span class="pre">dora.config.ConfigType</span></code></a></p>
+<dl class="attribute">
+<dt id="dora.config.SolrConfig.cache_ttl">
+<code class="descname">cache_ttl</code><a class="headerlink" href="#dora.config.SolrConfig.cache_ttl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dora.config.SolrConfig.host">
+<code class="descname">host</code><a class="headerlink" href="#dora.config.SolrConfig.host" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.config.SqlConfig">
+<em class="property">class </em><code class="descclassname">dora.config.</code><code class="descname">SqlConfig</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.config.SqlConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.config.ConfigType" title="dora.config.ConfigType"><code class="xref py py-class docutils literal"><span class="pre">dora.config.ConfigType</span></code></a></p>
+<dl class="attribute">
+<dt id="dora.config.SqlConfig.cache_ttl">
+<code class="descname">cache_ttl</code><a class="headerlink" href="#dora.config.SqlConfig.cache_ttl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dora.config.SqlConfig.connection_string">
+<code class="descname">connection_string</code><a class="headerlink" href="#dora.config.SqlConfig.connection_string" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="dora.config.SqlConfig.random_seed">
+<code class="descname">random_seed</code><a class="headerlink" href="#dora.config.SqlConfig.random_seed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.customers">
+<span id="dora-customers-module"></span><h2>dora.customers module<a class="headerlink" href="#module-dora.customers" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.customers.Customers">
+<em class="property">class </em><code class="descclassname">dora.customers.</code><code class="descname">Customers</code><span class="sig-paren">(</span><em>sql_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.customers.Customers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.SqlSource" title="dora.datasources.SqlSource"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.SqlSource</span></code></a></p>
+<dl class="method">
+<dt id="dora.customers.Customers.clusterCustomers">
+<code class="descname">clusterCustomers</code><span class="sig-paren">(</span><em>n_clusters=0</em>, <em>algorithm='auto'</em>, <em>init='k-means++'</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.customers.Customers.clusterCustomers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clusters the customers together based on gender, zipcode, numOrders, and TotalSpent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_clusters</strong> (<em>int</em>) – optional. default=8 The number of clusters to form as well as</li>
+<li><strong>number of centroids to generate.</strong> (<em>the</em>) – </li>
+<li><strong>algorithm</strong> (<em>string</em>) – optional. “auto”, “full” or “elkan”, default=”auto”. K-means algorithm</li>
+<li><strong>use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient</strong> (<em>to</em>) – </li>
+<li><strong>using the triangle inequality</strong><strong>, </strong><strong>but currently doesn’t support sparse data. “auto” chooses</strong> (<em>by</em>) – </li>
+<li><strong>for dense data and “full” for sparse data.</strong> (<em>“elkan”</em>) – </li>
+<li><strong>init</strong> (<em>string</em>) – optional. {‘k-means++’, ‘random’ or an ndarray}. Method for initialization,</li>
+<li><strong>to ‘k-means++’</strong> (<em>defaults</em>) – ‘k-means++’ : selects initial cluster centers for k-mean</li>
+<li><strong>in a smart way to speed up convergence. See section Notes in k_init for more</strong> (<em>clustering</em>) – </li>
+<li><strong>details.</strong> – </li>
+<li><strong>‘random’</strong> – choose k observations (rows) at random from data for the initial centroids.</li>
+<li><strong>an ndarray is passed</strong><strong>, </strong><strong>it should be of shape</strong> (<em>If</em>) – </li>
+<li><strong>centers.</strong> (<em>initial</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">householdid is the customer’s hosuehold
+identification. firstname is the customer’s name. y_pred is the cluster label for
+that customer.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple(householdid, firstname, y_pred)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dora.customers.Customers.clusterQuery">
+<code class="descname">clusterQuery</code><span class="sig-paren">(</span><em>min_date='1900-1-1'</em>, <em>max_date=None</em>, <em>sample_size=100</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.customers.Customers.clusterQuery" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>For each customer, find the number of books orders, gender, zipcode, household,</dt>
+<dd>first name, and total spend on books.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>min_date</strong> (<em>string</em>) – optional. date. Limits the search result timeframe.</li>
+<li><strong>max_date</strong> (<em>string</em>) – optional. date. Limits the timeframe for which</li>
+<li><strong>results will be returned</strong> (<a class="reference internal" href="#module-dora.customers" title="dora.customers"><em>customers</em></a>) – </li>
+<li><strong>sample_size</strong> (<em>int</em>) – optional. Percentage of the data the query will run over.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">numOrders
+is the number of times a customer has purchased a book. gender is the gender of the
+customer. zipcode identifiies the customers location. householdid is the customer’s
+hosuehold identification. firstname is the customer’s name. TotalSpent is the total
+amount the customer has spent on books.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple(numOrders, gender, zipcode, householdid, firstname, TotalSpent)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dora.customers.Customers.membersOfHousehold">
+<code class="descname">membersOfHousehold</code><span class="sig-paren">(</span><em>min_date=None</em>, <em>max_date=None</em>, <em>sample_size=100</em>, <em>householdID=0</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.customers.Customers.membersOfHousehold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dora.customers.Customers.productsByHousehold">
+<code class="descname">productsByHousehold</code><span class="sig-paren">(</span><em>min_date=None</em>, <em>max_date=None</em>, <em>sample_size=100</em>, <em>householdID=0</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.customers.Customers.productsByHousehold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dora.customers.Customers.statsByHousehold">
+<code class="descname">statsByHousehold</code><span class="sig-paren">(</span><em>min_date=None</em>, <em>max_date=None</em>, <em>sample_size=100</em>, <em>order_by='TotalOrders'</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.customers.Customers.statsByHousehold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.datasources">
+<span id="dora-datasources-module"></span><h2>dora.datasources module<a class="headerlink" href="#module-dora.datasources" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.datasources.AsterixConnection">
+<em class="property">class </em><code class="descclassname">dora.datasources.</code><code class="descname">AsterixConnection</code><span class="sig-paren">(</span><em>server</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.AsterixConnection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="dora.datasources.AsterixConnection.query">
+<code class="descname">query</code><span class="sig-paren">(</span><em>statement</em>, <em>pretty=False</em>, <em>client_context_id=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.AsterixConnection.query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.datasources.AsterixQueryResponse">
+<em class="property">class </em><code class="descclassname">dora.datasources.</code><code class="descname">AsterixQueryResponse</code><span class="sig-paren">(</span><em>raw_response</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.AsterixQueryResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.datasources.AsterixSource">
+<em class="property">class </em><code class="descclassname">dora.datasources.</code><code class="descname">AsterixSource</code><span class="sig-paren">(</span><em>asterix_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.AsterixSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.Cacheable" title="dora.datasources.Cacheable"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.Cacheable</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.datasources.Cacheable">
+<em class="property">class </em><code class="descclassname">dora.datasources.</code><code class="descname">Cacheable</code><span class="sig-paren">(</span><em>ttl</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.Cacheable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.datasources.QueryResponse">
+<em class="property">class </em><code class="descclassname">dora.datasources.</code><code class="descname">QueryResponse</code><span class="sig-paren">(</span><em>columns</em>, <em>results</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.QueryResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.datasources.SolrSource">
+<em class="property">class </em><code class="descclassname">dora.datasources.</code><code class="descname">SolrSource</code><span class="sig-paren">(</span><em>solr_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.SolrSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.Cacheable" title="dora.datasources.Cacheable"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.Cacheable</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="dora.datasources.SqlSource">
+<em class="property">class </em><code class="descclassname">dora.datasources.</code><code class="descname">SqlSource</code><span class="sig-paren">(</span><em>sql_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.datasources.SqlSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.Cacheable" title="dora.datasources.Cacheable"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.Cacheable</span></code></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.doraviz">
+<span id="dora-doraviz-module"></span><h2>dora.doraviz module<a class="headerlink" href="#module-dora.doraviz" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.doraviz.VizExplorer">
+<em class="property">class </em><code class="descclassname">dora.doraviz.</code><code class="descname">VizExplorer</code><a class="headerlink" href="#dora.doraviz.VizExplorer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="dora.doraviz.VizExplorer.bar">
+<code class="descname">bar</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>response</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.doraviz.VizExplorer.bar" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dora.doraviz.VizExplorer.line">
+<code class="descname">line</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>response</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.doraviz.VizExplorer.line" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dora.doraviz.VizExplorer.scatter">
+<code class="descname">scatter</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>response</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.doraviz.VizExplorer.scatter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.logger">
+<span id="dora-logger-module"></span><h2>dora.logger module<a class="headerlink" href="#module-dora.logger" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="dora.logger.log">
+<code class="descclassname">dora.logger.</code><code class="descname">log</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.logger.log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-dora.orders">
+<span id="dora-orders-module"></span><h2>dora.orders module<a class="headerlink" href="#module-dora.orders" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.orders.Orders">
+<em class="property">class </em><code class="descclassname">dora.orders.</code><code class="descname">Orders</code><span class="sig-paren">(</span><em>sql_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.orders.Orders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.SqlSource" title="dora.datasources.SqlSource"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.SqlSource</span></code></a></p>
+<dl class="method">
+<dt id="dora.orders.Orders.statsByProduct">
+<code class="descname">statsByProduct</code><span class="sig-paren">(</span><em>min_date='1900-1-1'</em>, <em>max_date=None</em>, <em>sample_size=100</em>, <em>order_by='num_orders'</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.orders.Orders.statsByProduct" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dora.orders.Orders.statsByZipcode">
+<code class="descname">statsByZipcode</code><span class="sig-paren">(</span><em>min_date='1900-1-1'</em>, <em>max_date=None</em>, <em>sample_size=100</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.orders.Orders.statsByZipcode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.products">
+<span id="dora-products-module"></span><h2>dora.products module<a class="headerlink" href="#module-dora.products" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.products.Products">
+<em class="property">class </em><code class="descclassname">dora.products.</code><code class="descname">Products</code><span class="sig-paren">(</span><em>sql_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.products.Products" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.SqlSource" title="dora.datasources.SqlSource"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.SqlSource</span></code></a></p>
+<dl class="method">
+<dt id="dora.products.Products.clusterProducts">
+<code class="descname">clusterProducts</code><span class="sig-paren">(</span><em>n_clusters=8</em>, <em>algorithm='auto'</em>, <em>asin=None</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.products.Products.clusterProducts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clusters the books together using KMeans clustering utilizing the clusterQuery
+results as the features (num_orders, avgrating, category, and days_on_sale).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_clusters</strong> (<em>int</em>) – optional. default=8 The number of clusters to form as well as</li>
+<li><strong>number of centroids to generate.</strong> (<em>the</em>) – </li>
+<li><strong>algorithm</strong> (<em>string</em>) – optional. “auto”, “full” or “elkan”, default=”auto”. K-means algorithm</li>
+<li><strong>use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient</strong> (<em>to</em>) – </li>
+<li><strong>using the triangle inequality</strong><strong>, </strong><strong>but currently doesn’t support sparse data. “auto” chooses</strong> (<em>by</em>) – </li>
+<li><strong>for dense data and “full” for sparse data.</strong> (<em>“elkan”</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">productid is the products unqiue identifier. asin is the
+identification of the book. y_pred is the label of the clsuter that the product belongs to.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple(productid, asin, y_pred)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dora.products.Products.clusterQuery">
+<code class="descname">clusterQuery</code><span class="sig-paren">(</span><em>min_date='1900-1-1'</em>, <em>max_date=None</em>, <em>sample_size=100</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.products.Products.clusterQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each book the product id, asin, the number of times it was purchased,
+the average star rating, the product category, and days the product has been on sale
+is returned.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>min_date</strong> (<em>string</em>) – optional. date. Limits the search result timeframe .</li>
+<li><strong>max_date</strong> (<em>string</em>) – optional. date. Limits the search result timeframe.</li>
+<li><strong>sample_size</strong> (<em>int</em>) – optional. Percentage of the data the query will run over.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">productid is
+the products unqiue identifier. asin is the identification of the book. num_orders
+counts the number of times the book has been purchased. avgrating is the average star
+rating of the book based on the user reviews. category is the product category that the
+book belongs to. days_on_sale is the number of days the book has been on sale.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple(productid, asin, num_orders, avgrating, category, days_on_sale)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dora.products.Products.clusterQueryCustomers">
+<code class="descname">clusterQueryCustomers</code><span class="sig-paren">(</span><em>min_date='1900-1-1'</em>, <em>max_date=None</em>, <em>sample_size=100</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.products.Products.clusterQueryCustomers" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>For each customer, find the number of books orders, gender, zipcode, household,</dt>
+<dd>first name, and total spend on books.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>min_date</strong> (<em>string</em>) – optional. date. Limits the search result timeframe.</li>
+<li><strong>max_date</strong> (<em>string</em>) – optional. date. Limits the timeframe for which</li>
+<li><strong>results will be returned</strong> (<a class="reference internal" href="#module-dora.customers" title="dora.customers"><em>customers</em></a>) – </li>
+<li><strong>sample_size</strong> (<em>int</em>) – optional. Percentage of the data the query will run over.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">numOrders
+is the number of times a customer has purchased a book. gender is the gender of the
+customer. zipcode identifiies the customers location. householdid is the customer’s
+hosuehold identification. firstname is the customer’s name. TotalSpent is the total
+amount the customer has spent on books.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple(numOrders, gender, zipcode, householdid, firstname, TotalSpent)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dora.products.Products.coPurchases">
+<code class="descname">coPurchases</code><span class="sig-paren">(</span><em>asin</em>, <em>min_date='1900-1-1'</em>, <em>max_date=None</em>, <em>sample_size=100</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.products.Products.coPurchases" title="Permalink to this definition">¶</a></dt>
+<dd><p>For each given book, find all the books purchased in the same order as the given book
+and the number of times that book was purchased.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>asin</strong> (<em>list</em>) – required. book asin ids. Determines the books that coPurchases will</li>
+<li><strong>searched for.</strong> (<em>be</em>) – </li>
+<li><strong>min_date</strong> (<em>string</em>) – optional. date. Limits the search result timeframe.</li>
+<li><strong>max_date</strong> (<em>string</em>) – optional. date. Limits the search result timeframe.</li>
+<li><strong>sample_size</strong> (<em>int</em>) – optional. Percentage of the data the query will run over.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">asin is the identification of the book that was purchased
+in the same order as one of the input bools. numPurch is the number of times
+the book the book was purchased.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple(asin, numPurch)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dora.products.Products.ratingsDistribution">
+<code class="descname">ratingsDistribution</code><span class="sig-paren">(</span><em>min_date='1900-1-1'</em>, <em>max_date=None</em>, <em>sample_size=100</em>, <em>asin=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.products.Products.ratingsDistribution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora.reviews">
+<span id="dora-reviews-module"></span><h2>dora.reviews module<a class="headerlink" href="#module-dora.reviews" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="dora.reviews.Reviews">
+<em class="property">class </em><code class="descclassname">dora.reviews.</code><code class="descname">Reviews</code><span class="sig-paren">(</span><em>sql_config</em>, <em>solr_config</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.reviews.Reviews" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dora.datasources.SqlSource" title="dora.datasources.SqlSource"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.SqlSource</span></code></a>, <a class="reference internal" href="#dora.datasources.SolrSource" title="dora.datasources.SolrSource"><code class="xref py py-class docutils literal"><span class="pre">dora.datasources.SolrSource</span></code></a></p>
+<dl class="method">
+<dt id="dora.reviews.Reviews.asinByTerms">
+<code class="descname">asinByTerms</code><span class="sig-paren">(</span><em>terms</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.reviews.Reviews.asinByTerms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of words, find ASIN with the highest Solr score from its reviews.</p>
+<p>Solr score is configurable by facet.method parameter. Default ‘fc’ option used.
+<a class="reference external" href="https://lucene.apache.org/solr/guide/6_6/faceting.html#Faceting-Thefacet.methodParameter">https://lucene.apache.org/solr/guide/6_6/faceting.html#Faceting-Thefacet.methodParameter</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>terms</strong> (<em>list</em>) – list of strings</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">asin is a product identifier. score is the metric Solr is configured for (see above).</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="dora.reviews.Reviews.termsByAsin">
+<code class="descname">termsByAsin</code><span class="sig-paren">(</span><em>asin</em><span class="sig-paren">)</span><a class="headerlink" href="#dora.reviews.Reviews.termsByAsin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an ASIN, find the terms with the highest Solr score from its reviews.</p>
+<p>Solr score is configurable by facet.method parameter. Default ‘fc’ option used.
+<a class="reference external" href="https://lucene.apache.org/solr/guide/6_6/faceting.html#Faceting-Thefacet.methodParameter">https://lucene.apache.org/solr/guide/6_6/faceting.html#Faceting-Thefacet.methodParameter</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>asin</strong> (<em>string</em>) – required. product identifier. Analyze terms for this product’s reviews</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">term is a token as defined by Solr. score is the metric Solr is configured for (see above).</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple(term, score)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-dora">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dora" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">dora package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-dora.api">dora.api module</a></li>
+<li><a class="reference internal" href="#module-dora.categories">dora.categories module</a></li>
+<li><a class="reference internal" href="#module-dora.config">dora.config module</a></li>
+<li><a class="reference internal" href="#module-dora.customers">dora.customers module</a></li>
+<li><a class="reference internal" href="#module-dora.datasources">dora.datasources module</a></li>
+<li><a class="reference internal" href="#module-dora.doraviz">dora.doraviz module</a></li>
+<li><a class="reference internal" href="#module-dora.logger">dora.logger module</a></li>
+<li><a class="reference internal" href="#module-dora.orders">dora.orders module</a></li>
+<li><a class="reference internal" href="#module-dora.products">dora.products module</a></li>
+<li><a class="reference internal" href="#module-dora.reviews">dora.reviews module</a></li>
+<li><a class="reference internal" href="#module-dora">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/dora.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Dora - Data Exploration API .1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Team Product Recommendations.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

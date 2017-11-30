@@ -38,7 +38,7 @@ class Reviews(SqlSource, SolrSource):
             terms (list): list of strings
 
         Returns:
-           tuple(asin, score): asin is a product identifier. score is the metric Solr is configured for (see above).
+           tuple: asin is a product identifier. score is the metric Solr is configured for (see above).
         """
 
         return self._execSolrQuery(

@@ -16,7 +16,7 @@ pip install . --upgrade
 Run an upgrade after any changes made to /dora. Notebook kernels must be restarted afterwards. 
 
 ### Usage
-**production.config must be in the directory with the python code referencing dora - working on fix for default**
+**default config points to SDSC hosted data sources**
 ```python
 from dora.api import DataExplorer
 d = DataExplorer()

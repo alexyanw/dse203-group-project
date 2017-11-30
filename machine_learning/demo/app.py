@@ -39,12 +39,17 @@ matrix_cxd = np.load('demo_matrix.npy')
 # load in depth x products x category lvls matrix
 matrix_dxpxl = np.load('categories_indexed.npy')
 
-# general co-occurrence matrix
+# load in general co-occurrence matrix
 matrix_ccm_g = np.load('ccm_general.npy')
 
-# seasons / price / instock product matrix
+# load in seasons / price / instock product matrix
 matrix_season_price_instock = np.load('season_price_instock_indexed.npy')
 
+# load in content rating array
+matrix_content = np.load('asin_rating.npy')
+
+# load in customer ids
+list_cust_ids = list(np.load('custids.npy'))
 
 ########################
 # general functions
@@ -193,6 +198,13 @@ def get_idx_from_asin(asin_list):
 			pass
 	return list_idx
 
+def get_idx_from_custid(custid_int):
+	int_idx = 0
+	try:
+		int_idx = list_cust_ids.index(custid_int)
+	except ValueError:
+		pass
+	return int_idx
 
 
 ########################
@@ -202,23 +214,21 @@ def get_idx_from_asin(asin_list):
 @app.route('/get_demoid', methods=['GET'])
 def get_demoid():
 	# lookup table customerid input
-	arg_custid = request.args.get('custid')
+	arg_custid = int(request.args.get('custid'))
 	array_demo = np.zeros(matrix_cxd.shape[1])
-	if int(arg_custid) >= 0 and int(arg_custid)  < matrix_cxd.shape[0]:
-		array_demo = matrix_cxd[int(arg_custid)]
-	#return jsonify(demographic_region=int(array_demo[0]), demographic_gender=int(array_demo[1]))
+	if arg_custid in list_cust_ids:
+		array_demo = matrix_cxd[get_idx_from_custid(arg_custid)]
 	return Response(json.dumps({'demographic_region': int(array_demo[0]), 'demographic_gender': int(array_demo[1])}),  mimetype='application/json')
 
 @app.route('/get_purchases', methods=['GET'])
 def get_purchases():
 	# lookup table customerid input
-	arg_custid = request.args.get('custid')
+	arg_custid = int(request.args.get('custid'))
 	list_pur = []
-	if int(arg_custid) >= 0 and int(arg_custid)  < matrix_cxd.shape[0]:
-		list_temp = list(np.where(matrix_cxp[int(arg_custid)] > 0)[0])
+	if arg_custid in list_cust_ids:
+		list_temp = list(np.where(matrix_cxp[get_idx_from_custid(arg_custid)] > 0)[0])
 		for l in list_temp:
 			list_pur.append(list_asin_names[l])
-	#return jsonify(purchases=list_pur)
 	return Response(json.dumps({'purchases': list_pur}),  mimetype='application/json')
 
 @app.route('/get_collabrec', methods=['GET'])
@@ -288,9 +298,9 @@ def get_contentec():
 	arg_season_list = request.args.getlist('list_seasons')
 	arg_price = int(request.args.get('max_price',0))
 
-	# Placeholder using co-occurrence instead of content
-	# add up all co-occurrence rows
-	rowsum = np.sum(matrix_ccm_g,axis=0)
+	# content matrix
+	rowsum = matrix_content
+	rowsum[rowsum == 0] = 0.01
 
 	# Remove perviously purchased
 	rowsum[get_idx_from_asin(arg_purchase_list)] = 0
