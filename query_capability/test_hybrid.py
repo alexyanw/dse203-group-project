@@ -72,11 +72,12 @@ datalog = [
 # union
 # view
 
+# using local server, everything default
 engine = HybridEngine()
 #engine = HybridEngine(
-#                postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook'},
-#                asterix= {'server': 'localhost', 'port': 19002},
-#                solr= {'server': 'localhost', 'port': 8983})
+#                postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': ''},
+#                asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
+#                solr= {'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
 #result = engine.queryDatalog(datalog, debug=True)
 result = engine.queryDatalog(datalog)
 print(result)

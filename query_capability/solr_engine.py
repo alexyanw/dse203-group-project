@@ -1,4 +1,5 @@
 from urllib import parse, request
+import pysolr
 from json import loads
 from review_text import ReviewText
 
@@ -16,11 +17,12 @@ class SolrResponse:
 
 class SolrEngine:
     def __init__(self, cfg={}):
-        self._server = cfg.get('server', 'localhost')
+        self._server = cfg.get('server', '132.249.238.28')
         self._port = cfg.get('port', 8983)
-        self._database = cfg.get('database', 'bookstore')
-        core_name = "bookstore"
-        self.baseurl = "http://" + self._server + ":" + str(self._port) + "/solr/" + self._database
+        self._core = cfg.get('core', 'bookstore_pr')
+        self.baseurl = "http://" + self._server + ":" + str(self._port) + "/solr/"
+        #http://localhost:8983/solr/
+        self._solr_conn = solr = pysolr.Solr(self.baseurl, timeout=10)
 
         self.schema_wrapper = {
             'review_text': ReviewText,
@@ -29,20 +31,12 @@ class SolrEngine:
         }
 
     def execute(self, params, **kwargs):
-        #"/select?q=" + query
-        queryurl = self.baseurl + "/select?" + params
-        if 'debug' in kwargs: return queryurl
-
-        req = request.Request(self.baseurl)
-        result = request.urlopen(req)
-        #decode = 'iso-8859-1'
-        #str_data = result.read().decode(decode)
-        str_data = result.read()
-        return SolrResponse(str_data)
+        results = solr.search(self._core, params)
+        #return SolrResponse(str_data)
+        return results
 
     def queryDatalog(self, datalog, **kwargs):
         builder = SolrUrlBuilder(datalog)
-        params = builder.getQueryUrl(self.special_handler)
-
+        params = builder.getQueryUrl(self.special_handler, **kwargs)
         return self.execute(params, **kwargs)
 
