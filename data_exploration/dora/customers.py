@@ -73,7 +73,7 @@ class Customers(SqlSource):
                     WHEN c.gender = 'F'
                     THEN 1
                     ELSE 2
-                END AS gender
+                END AS gender,
                 o.zipcode::integer,
                 sum(regexp_replace(o.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as TotalSpent,
                 c.householdid,
@@ -83,14 +83,13 @@ class Customers(SqlSource):
                 orders o
             WHERE
                 c.customerid!=0
-                AND LEN(o.zipcode) >= 5
-                AND LEN(o.zipcode) < 7
-                AND ISNUMERIC(o.zipcode) = 1
-                AND o.customerid=c.customerid
+                AND LENGTH(o.zipcode) >= 5
+                AND LENGTH(o.zipcode) < 7
+                AND o.zipcode  ~ '^\d+(.\d+)?$'
                 AND o.orderdate >= %(min_date)s'''
                  + household_filter
                  + max_date_filter
-                 + '''GROUP BY
+            + '''GROUP BY
                     c.gender,
                     c.householdid,
                     o.zipcode,
