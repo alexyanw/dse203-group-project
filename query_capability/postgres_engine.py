@@ -10,10 +10,12 @@ __all__ = ['PostgresEngine']
 
 class PostgresEngine:
     def __init__(self, cfg={}):
-        server = cfg.get('server', 'localhost')
+        server = cfg.get('server', '132.249.238.27')
         port = cfg.get('port', 5432)
-        database = cfg.get('database', 'SQLBook')
-        self.dburl = 'postgresql://postgres:@' + server + ':' + str(port) + '/' + database
+        database = cfg.get('database', 'bookstore_pr')
+        user = cfg.get('user', 'student')
+        passwd = cfg.get('password', '123456')
+        self.dburl = 'postgresql://' + user + ':' + passwd + '@' + server + ':' + str(port) + '/' + database
         self.schema_wrapper = {
             'product_view': ProductView,
             'product_orders': ProductView,

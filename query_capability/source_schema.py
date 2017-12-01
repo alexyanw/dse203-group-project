@@ -3,7 +3,7 @@ import sys
 class SourceTable:
     schema = {
         'customers': ['customerid', 'householdid', 'gender', 'firstname'],
-        'products': ['productid', 'name', 'groupcode', 'groupname', 'isinstock', 'fullprice', 'asin', 'category'],
+        'products': ['productid', 'name', 'groupcode', 'groupname', 'isinstock', 'fullprice', 'asin', 'nodeid'],
         'orders': ['orderid', 'customerid', 'campaignid', 'orderdate', 'city', 'state', 'zipcode', 'paymenttype', 'totalprice', 'numorderlines', 'numunits'],
         'orderlines': ['orderlineid', 'orderid', 'productid', 'shipdate', 'billdate', 'unitprice', 'numunits', 'totalprice'],
         'campaigns': ['campaignid' 'campaignname', 'channel', 'discount', 'freeshippingflag'],
