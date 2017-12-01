@@ -39,7 +39,17 @@ class Customers(SqlSource):
                 orderlines.orderid = orders.orderid AND
                 orders.customerid = customers.customerid AND
                 customers.householdid={}'''.format(householdID))
-    
+
+    @log
+    def idsForCustomer(self, customermatchedids = []):
+        return self._execSqlQuery('''
+            SELECT *
+            FROM customers_matched_customerids
+            WHERE customermatchedid in %(customermatchedids)s''',
+            {
+                'customermatchedids': tuple(customermatchedids),
+            })
+
     @log
     def statsByCustomer(self, min_date='1900-1-1', max_date=None, householdid=[], sample_size=100):
         """For each customer, find the number of books orders, gender, zipcode, household,
@@ -66,57 +76,63 @@ class Customers(SqlSource):
                             else ' ')
 
         query = ('''
-              SELECT
-                    count(o.orderid) as numOrders,
-                    CASE
-                        WHEN c.gender = 'M'
-                        THEN 0
-                        WHEN c.gender = 'F'
-                        THEN 1
-                        ELSE 2
-                    END AS gender,
-                    TRIM(o.zipcode)::NUMERIC as zipcode,
-                    z.totpop as TotalPop,
-                    z.medianage as MedianAge,
-                    z.males as TotalMales,
-                    z.females as TotalFemales,
-                    sum(regexp_replace(o.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as TotalSpent,
-                    c.householdid,
-                    c.firstname,
-                    count(c.customerid) as num_customerid,
-                    count(o.orderid) as num_orders
-                FROM
-                    customers c,
-                    orders o,
-                    zipcensus z
-                WHERE
-                    c.customerid!=0
-                    AND o.customerid=c.customerid
-                    AND LENGTH(trim(o.zipcode)) >= 5
-                    AND LENGTH(trim(o.zipcode)) < 7
-                    AND trim(o.zipcode)  ~ '^\d+$' '''
-                    + household_filter
-                    + max_date_filter
-                    + '''
-                    AND o.zipcode=z.zcta5
-                GROUP BY
-                        c.gender,
-                        c.householdid,
-                        trim(o.zipcode),
-                        z.totpop, 
-                        z.medianage,
-                        z.males,
-                        z.females,
-                        c.firstname
-                ORDER BY numOrders desc''')
+            SELECT
+                cmc.customermatchedid,
+                count(o.orderid) as numOrders,
+                CASE
+                    WHEN c.gender = 'M'
+                    THEN 0
+                    WHEN c.gender = 'F'
+                    THEN 1
+                    ELSE 2
+                END AS gender,
+                TRIM(o.zipcode)::NUMERIC as zipcode,
+                z.totpop as TotalPop,
+                z.medianage as MedianAge,
+                z.males as TotalMales,
+                z.females as TotalFemales,
+                sum(regexp_replace(o.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as TotalSpent,
+                c.householdid,
+                c.firstname,
+                count(c.customerid) as num_customerid,
+                count(o.orderid) as num_orders
+            FROM
+                customers c,
+                customers_matched cm,
+                customers_matched_customerids cmc,
+                orders o,
+                zipcensus z
+            WHERE
+                c.customerid!=0
+                AND o.customerid=c.customerid
+                AND c.customerid = cmc.customerid
+                AND cmc.customermatchedid = cm.customermatchedid
+                AND LENGTH(trim(o.zipcode)) >= 5
+                AND LENGTH(trim(o.zipcode)) < 7
+                AND trim(o.zipcode)  ~ '^\d+$' '''
+                + household_filter
+                + max_date_filter
+                + '''
+                AND o.zipcode=z.zcta5
+            GROUP BY
+                cmc.customermatchedid,
+                c.gender,
+                c.householdid,
+                trim(o.zipcode),
+                z.totpop,
+                z.medianage,
+                z.males,
+                z.females,
+                c.firstname
+            ORDER BY numOrders desc''')
         return self._execSqlQuery(query,
-              {
-                  'min_date': min_date,
-                  'max_date': max_date,
-                  'householdid_list': tuple(householdid),
-                  'sample_size': sample_size,
-                  'random_seed': self._random_seed
-              })
+            {
+                'min_date': min_date,
+                'max_date': max_date,
+                'householdid_list': tuple(householdid),
+                'sample_size': sample_size,
+                'random_seed': self._random_seed
+            })
     
     @log
     def clusterCustomers(self,
@@ -156,7 +172,7 @@ class Customers(SqlSource):
         if (not hasattr(feature_set, 'results')) | (not hasattr(feature_set, 'columns')):
             raise Exception('invalid feature set, no results or columns')
 
-        #response_columns = feature_set.columns + ['cluster']
+
 
         data = pd.DataFrame(feature_set.results, columns=feature_set.columns)
         data[cluster_on] = data[cluster_on].apply(pd.to_numeric, errors='coerce', axis=1)
@@ -169,21 +185,34 @@ class Customers(SqlSource):
 
         clustering = pd.DataFrame(X, columns=cluster_on)
 
-        print(clustering.dtypes)
-        print(clustering.head())
+        def label_custids(clustering_row, custid_response):
+            matched_index = custid_response.columns.index('customermatchedid')
+            custid_index = custid_response.columns.index('customerid')
+            return [ x[custid_index]
+                for x in custid_response.results
+                if x[matched_index] == clustering_row['customermatchedid']]
+
         algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init))
         algorithm.fit_predict(X)
 
         for col in feature_set.columns:
             if col not in clustering.columns.values:
-                #print(col)
                 clustering.loc[:, col] = data[col]
-                #print(clustering.head())
         
 
         response_columns=np.append(clustering.columns.values,'cluster')
-        
         clustering.loc[:, 'cluster'] = algorithm.labels_
+
+        response_columns = np.append(response_columns, 'customerids')
+        customerids = self.idsForCustomer(clustering['customermatchedid'])
+        custid_df = (pd.DataFrame(
+            data=customerids.results,
+            columns=customerids.columns)
+                     .groupby('customermatchedid')
+                     .aggregate(lambda x: tuple(x))
+                     .reset_index())
+
+        clustering = pd.merge(clustering, custid_df, on='customermatchedid', how='left')
 
         centers = algorithm.cluster_centers_
 
