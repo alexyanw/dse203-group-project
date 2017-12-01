@@ -25,8 +25,8 @@ class DatalogParser:
         #self.resolveNegation()
 
         self.groupby = None
-        self.aggregation = None
-        self.resolveAggregation(q0['groupby'])
+        self.aggregation = {}
+        self.resolveAggregation(q0.get('groupby'))
         self.limit = q0.get('limit', None)
 
         self.validate()
@@ -41,7 +41,6 @@ class DatalogParser:
         source,table = list(self.column_to_table[groupkey].items())[0]
         self.groupby = {'source': source, 'table':table, 'column': groupkey}
         
-        self.aggregation = {}
         for agg in aggs:
             match = re.search("(\S+)\((\S+),(\S+)\)", re.sub("\s", '', agg))
             if match:
