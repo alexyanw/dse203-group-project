@@ -94,8 +94,7 @@ class Customers(SqlSource):
                 sum(regexp_replace(o.totalprice :: TEXT, '[$,]', '', 'g') :: NUMERIC) as TotalSpent,
                 c.householdid,
                 c.firstname,
-                count(c.customerid) as num_customerid,
-                count(o.orderid) as num_orders
+                count(c.customerid) as numCustomerid
             FROM
                 customers c,
                 customers_matched cm,
@@ -137,10 +136,20 @@ class Customers(SqlSource):
     @log
     def clusterCustomers(self,
                          feature_set=None,
-                         n_clusters=0,
+                         n_clusters=8,
                          algorithm='auto',
                          init='k-means++',
-                         cluster_on=['numorders', 'gender', 'totalpop','totalspent'],
+                         cluster_on=[
+                             'numorders',
+                             'gender',
+                             'totalpop',
+                             'totalspent',
+                             'customermatchedid',
+                             'zipcode',
+                             'medianage',
+                             'totalmales',
+                             'totalfemales'
+                         ],
                          scale=False):
         """Clusters the customers together based on gender, zipcode, numOrders, and TotalSpent. 
         Args:
