@@ -142,13 +142,12 @@ class Customers(SqlSource):
                          cluster_on=[
                              'numorders',
                              'gender',
-                             'totalpop',
+                             #'totalpop',
                              'totalspent',
-                             'customermatchedid',
                              'zipcode',
-                             'medianage',
-                             'totalmales',
-                             'totalfemales'
+                             #'medianage',
+                             #'totalmales',
+                             #'totalfemales'
                          ],
                          scale=False):
         """Clusters the customers together based on gender, zipcode, numOrders, and TotalSpent. 
