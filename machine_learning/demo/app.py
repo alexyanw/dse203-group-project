@@ -243,8 +243,6 @@ def get_collabrec():
 	arg_season_list = request.args.getlist('list_seasons')
 	arg_price = int(request.args.get('max_price',0))
 
-	print get_idx_from_asin(arg_purchase_list)
-
 	# Select corrrect matrix based on demographics, currently using general
 	# add up all co-occurrence rows
 	rowsum = np.zeros(matrix_ccm_g.shape[0])
@@ -299,7 +297,7 @@ def get_contentec():
 	arg_price = int(request.args.get('max_price',0))
 
 	# content matrix
-	rowsum = matrix_content
+	rowsum = np.copy(matrix_content)
 	rowsum[rowsum == 0] = 0.01
 
 	# Remove perviously purchased
