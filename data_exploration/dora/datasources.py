@@ -52,7 +52,6 @@ class Cacheable(object):
 
     def _cache(self, query, response):
         query_path = os.path.join(self._dir, str(sha1(query).hexdigest()))
-        print(query_path)
         if os.path.isfile(query_path):
             os.remove(query_path)
 
@@ -106,10 +105,12 @@ class AsterixSource(Cacheable):
     def _transform_server_response(self, server_response):
         results = server_response.results
 
-        if (results != None) & (len(results) > 0):
-            fields = [str(x) for x in results[0].keys()]
-        else:
-            None
+        if (results == None) | (len(results) == 0):
+            return QueryResponse(
+            columns=[],
+            results=[])
+
+        fields = [str(x) for x in results[0].keys()]
         tuples = [tuple([dic[field] for field in fields]) for dic in results]
 
         return QueryResponse(
