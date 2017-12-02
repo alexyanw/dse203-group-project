@@ -45,7 +45,7 @@ class PostgresEngine:
 
         return self.schema_wrapper[table]().get_views(features, **kwargs)
 
-    def queryDatalog(self, datalog, **kwargs):
+    def query(self, datalog, **kwargs):
         builder = SQLBuilder(datalog, self.schema_wrapper)
         views = []
         for table in datalog['tables']:
