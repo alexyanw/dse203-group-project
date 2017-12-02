@@ -27,6 +27,7 @@ class DatalogParser:
         self.join_path = self.resolveJoinPath(self.join_columns, self.source_tables)
         self.return_columns = self.getReturnColumns(self._result)
         self.query_columns = self.getQueryColumns(self.return_columns)         #numunits, firstname, billdate
+        self.orderby = q.get('orderby', None)
         self.limit = q.get('limit', None)
 
         self.validate()

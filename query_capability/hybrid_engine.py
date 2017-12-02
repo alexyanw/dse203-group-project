@@ -5,6 +5,7 @@ from asterix_engine import AsterixEngine
 from solr_engine import SolrEngine
 from datalog_parser import DatalogParser
 from combiner import Combiner
+from writeback import Writeback
 
 __all__ = ['HybridEngine']
 
@@ -15,6 +16,7 @@ class HybridEngine:
         self.engines['asterix'] = AsterixEngine(kwargs['asterix']) if 'asterix' in kwargs else AsterixEngine()
         self.engines['solr'] = SolrEngine(kwargs['solr']) if 'solr' in kwargs else SolrEngine()
         self.mode = None
+        self.writeback = Writeback(self.engines['postgres'])
 
     def analyze(self, datalog, **kwargs):
         #if type(datalog) is dict: return self.querySubDatalog(datalog)
@@ -79,10 +81,20 @@ class HybridEngine:
                 'conditions': parser.table_conditions.get(source,None),
                 'join': parser.join_path.get(source, None),
                 'groupby': parser.groupby if parser.single_source() else None,
+                'orderby': parser.orderby if parser.single_source() else None,
                 'limit': parser.limit if parser.single_source() else None,
                 }
             results[source] = self.engines[source].query(subquery, **kwargs)
         return results
+
+    def create(self, table):
+        self.writeback.create(table)
+
+    def writeback(self, table, df):
+        self.writeback.write(table, df)
+
+    def execute(self, sqlcmd):
+        self.engines['postgres'].execute(sqlcmd)
 
     def debugPrint(self, sub_results):
         for source in sub_results:

@@ -9,6 +9,7 @@ datalog1 = [
             'postgres.orderlines(orderLineId, orderid, productId, shipDate, billdate, unitPrice, numunits, _)',
            ],
     'condition': ['orderid > 1000', 'numunits > 1'],
+    'orderby': 'numunits DESC',
     'limit': '10'
     }
 ]
