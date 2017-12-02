@@ -50,7 +50,7 @@ class AsterixEngine:
         str_data = resource.read().decode(decode)
         return QueryResponse(str_data).results
 
-    def queryDatalog(self, datalog, **kwargs):
+    def query(self, datalog, **kwargs):
         builder = SQLPPBuilder(datalog, self.schema_wrapper)
         views = []
         for table in datalog['tables']:

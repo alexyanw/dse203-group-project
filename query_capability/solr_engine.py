@@ -34,7 +34,7 @@ class SolrEngine:
         results = self._solr_conn.search('*:*', **params)
         return results
 
-    def queryDatalog(self, datalog, **kwargs):
+    def query(self, datalog, **kwargs):
         if len(datalog['tables']) != 1 or datalog['tables'][0] != 'review_text':
             print("Error: datalog query to solr must be on table review_text")
             exit(1)
@@ -49,12 +49,14 @@ class SolrEngine:
             if df_results is None: df_results = result
             else: df_results = df_results.merge(result, on='id')
 
-        df_results = self.filter_by_condition(df_results, datalog['conditions'][table])
+        if datalog['conditions']:
+            df_results = self.filter_by_condition(df_results, datalog['conditions'][table])
         # filter result by return columns
         ret_cols = [ret['column'] for ret in datalog['return']]
         return df_results[ret_cols]
 
     def filter_by_condition(self, df_in, conditions):
+        if not conditions: return df_in
         df_results = df_in
         for cond in conditions:
             col,op,value = cond

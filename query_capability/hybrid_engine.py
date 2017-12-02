@@ -30,7 +30,7 @@ class HybridEngine:
 
         if len(datalog) == 1:
             self.mode = 'single'
-        elif view in sources and len(sources) == 2:
+        elif 'view' in sources and len(sources) == 2:
             self.mode = 'single_view'
         elif len(set([p.return_table for p in self.parsers])) == 1:
             self.mode = 'union'
@@ -61,58 +61,10 @@ class HybridEngine:
             return None
         return source_result
 
-    def resolveJoinPath(self, join_columns, source_tables):
-        join_paths = {}
-        join_paths['MULTI_SOURCE'] = {}
-        for col,tables in join_columns.items():
-            col_source = {}
-            for table in tables:
-                source = [s for s,ts in source_tables.items() if table in ts][0]
-                if source not in col_source: col_source[source] = []
-                col_source[source].append(source+'.'+table)
-            if len(col_source) == 1:
-                source = list(col_source.keys())[0]
-                if source not in join_paths: join_paths[source] = {}
-                join_paths[source][col] = tables
-            else:
-                join_paths['MULTI_SOURCE'][col] = [table for tables in col_source.values() for table in tables]
-        return join_paths
-
-    def resolveReturnColumns(self, parser, join_path):
-        return_columns = {'MULTI_SOURCE': []}
-        for source, tables in parser.source_tables.items():
-            columns = []
-            table_columns = []
-            for col in parser.return_columns:
-                if col in parser.column_to_table:
-                    table = parser.column_to_table[col].get(source, None)
-                    if not table: continue
-                    columns.append(col)
-                    table_columns.append({'table':table,'column':col,'func':None,'alias':None})
-                    return_columns['MULTI_SOURCE'].append({'table':table,'column':col,'func':None,'alias':None})
-                elif col in parser.aggregation:
-                    func,src_col = parser.aggregation[col]
-                    table = parser.column_to_table[src_col].get(source, None)
-                    if not table: continue
-                    if parser.single_source():
-                        table_columns.append({'table':table,'column':src_col,'func':func,'alias':col})
-                    else:
-                        table_columns.append({'table':table,'column':src_col,'func':None,'alias':None})
-                        return_columns['MULTI_SOURCE'].append({'table':table,'column':src_col,'func':func,'alias':col})
-
-            for col in join_path['MULTI_SOURCE']:
-                table = parser.column_to_table[col].get(source, None)
-                if table and col not in columns:
-                    table_columns.append({'table':table,'column':col,'func':None,'alias':None})
-            return_columns[source] = table_columns
-        return return_columns
-
     def arbiter(self, parser, **kwargs):
-        #join_path = self.resolveJoinPath(parser.join_columns, parser.source_tables)
-        #return_columns = self.resolveReturnColumns(parser, join_path)
         if 'debug' in kwargs: 
-            print("###### return columns #######")
-            print(parser.return_columns, "\n")
+            print("###### query columns #######")
+            print(parser.query_columns, "\n")
 
             print("###### join path #######")
             print(parser.join_path, "\n")
@@ -120,7 +72,7 @@ class HybridEngine:
         results = {}
         for source, tables in parser.source_tables.items():
             subquery = {
-                'return': parser.return_columns[source],
+                'return': parser.query_columns[source],
                 'tables': tables,
                 'columns': parser.table_columns,
                 'column_idx': {t: parser.table_column_idx[t] for t in tables},
@@ -129,7 +81,7 @@ class HybridEngine:
                 'groupby': parser.groupby if parser.single_source() else None,
                 'limit': parser.limit if parser.single_source() else None,
                 }
-            results[source] = self.engines[source].queryDatalog(subquery, **kwargs)
+            results[source] = self.engines[source].query(subquery, **kwargs)
         return results
 
     def debugPrint(self, sub_results):
