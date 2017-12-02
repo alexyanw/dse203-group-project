@@ -7,7 +7,7 @@ __all__ = ['DatalogParser']
 
 class DatalogParser:
     def __init__(self, q):
-        self.result = q['result']          # Ans(numunits, firstname, billdate)
+        self._result = q['result']          # Ans(numunits, firstname, billdate)
         self.conditions = q['condition']    # ['orders.orderid > 1000', 'orders.numunits > 1']
 
         tables = q['table'] # ['orders(numunits, customerid, orderid)', 'customers(firstname, customerid)', 'orderlines(billdate, orderid)']
@@ -17,7 +17,7 @@ class DatalogParser:
         self.table_column_idx = {}
         self.column_to_table = {}
         self.resolveSourceTables(tables)
-        self.return_table = self.getReturnTable(self.result)
+        self.return_table = self.getReturnTable(self._result)
         self.join_columns = self.getJoinColumns(self.table_columns)
         self.table_conditions = self.getTableConditions(self.conditions)
         #self.resolveNegation()
@@ -25,7 +25,8 @@ class DatalogParser:
         self.groupby = None
         self.aggregation = self.resolveAggregation(q.get('groupby'))
         self.join_path = self.resolveJoinPath(self.join_columns, self.source_tables)
-        self.return_columns = self.getReturnColumns(self.result)         #numunits, firstname, billdate
+        self.return_columns = self.getReturnColumns(self._result)
+        self.query_columns = self.getQueryColumns(self.return_columns)         #numunits, firstname, billdate
         self.limit = q.get('limit', None)
 
         self.validate()
@@ -97,11 +98,12 @@ class DatalogParser:
                 join_paths['MULTI_SOURCE'][col] = [table for tables in col_source.values() for table in tables]
         return join_paths
 
+    def getReturnColumns(self, datalog):
+        return [col.strip() for col in datalog[(datalog.index("(")+1): datalog.index(")")].split(",")]
 
     # Given a datalog query of form - "Ans(numunits, firstname, billdate), orders.orderid > 1000, orders.numunits > 1"
     # this method extracts the column names from it
-    def getReturnColumns(self, datalog):
-        ret_cols = [col.strip() for col in datalog[(datalog.index("(")+1): datalog.index(")")].split(",")]
+    def getQueryColumns(self, ret_cols):
         return_columns = {'MULTI_SOURCE': []}
         for source, tables in self.source_tables.items():
             columns = []
