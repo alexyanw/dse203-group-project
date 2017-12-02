@@ -21,12 +21,13 @@ class Products(SqlSource):
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes', 'four_star_votes', 'five_star_votes): asin is the label for the book. productid is the unique identifier
-             for the product. one_star_votes is the number of one star reveiws the book received.
-             two_star_votes is the number of two star reveiws the book received. three_star_votes is the
-             number of three star reveiws the book received. four_star_votes is the number of four star
-             reveiws the book received. five_star_votes is the number of five star reveiws the book
-             received. """
+             tuple(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes',
+             'four_star_votes', 'five_star_votes): asin is the label for the book. productid is the
+             unique identifier for the product. one_star_votes is the number of one star reveiws the book
+             received. two_star_votes is the number of two star reveiws the book received. 
+             three_star_votes is the number of three star reveiws the book received. four_star_votes is
+             the number of four star reveiws the book received. five_star_votes is the number of five
+             star reveiws the book received. """
         
         
         max_date_filter =  ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
@@ -129,7 +130,7 @@ class Products(SqlSource):
               orders o
             WHERE
               o.orderid = ol.orderid
-              AND o.orderdate > %(min_date)s'''+max_date_filter+'''
+              AND o.orderdate >= %(min_date)s'''+max_date_filter+'''
               AND ol.orderid in (
                 SELECT orid.orderid
                 FROM (
