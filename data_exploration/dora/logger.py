@@ -1,6 +1,9 @@
 import os
 from datetime import datetime
 from functools import wraps
+from uuid import getnode as get_mac
+from .benchmarks import Benchmarks
+from .config import Config
 
 def log(f):
     _log_file = '.log'
@@ -9,15 +12,43 @@ def log(f):
         l = open(_log_file, "w")
         l.close()
 
+    sql_config = Config().sql_config
+    benchmarks = Benchmarks(sql_config)
+    mac = get_mac()
+
     @wraps(f)
     def wrap(self, *args, **kwargs):
-        line = f.__qualname__ + ',' + str(args) + ',' + str(kwargs) + ',' + str(datetime.now())
-        result = f(self, *args, **kwargs)
-        is_cached = str(result.is_cached if hasattr(result, 'is_cached') else False)
 
-        line += ',' + str(datetime.now()) + ',' + is_cached + '\n'
+        function = f.__qualname__
+        args_str = str(args)
+        kwargs_str = str(kwargs)
+        start = str(datetime.now())
+
+        result = f(self, *args, **kwargs)
+
+        is_cached = str(result.is_cached if hasattr(result, 'is_cached') else False)
+        end = str(datetime.now())
+
         with open(_log_file, "a") as l:
-            l.write(line)
+            l.write(
+                function+ ',' +
+                args_str+ ',' +
+                kwargs_str+ ',' +
+                start+ ',' +
+                end+ ',' +
+                is_cached +
+                '\n')
+
+        benchmarks.insert(
+            function,
+            args_str,
+            kwargs_str,
+            start,
+            end,
+            is_cached,
+            mac
+        )
+
         return result
 
     return wrap

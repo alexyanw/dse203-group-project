@@ -1,14 +1,34 @@
-from .datasources import SqlSource
+from .datasources import SqlSource, QueryResponse
 from .logger import log
 from datetime import datetime
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+import numpy as np
 
 class Products(SqlSource):
+    
     @log
-    def ratingsDistribution(self, min_date='1900-1-1', max_date=None, sample_size=100, asin=[]):
+    def ratingsDistribution(self, min_date='1900-1-1', max_date=None,asin=[], sample_size=100):
+        """For each product, determine the how many 1, 2, 3, 4, and 5 star reviews the product received. 
 
+        Args:
+            min_date (string): optional. date. Limits the search result timeframe.
+            max_date (string): optional. date. Limits the timeframe for which 
+            customers results will be returned
+            asin (string):optional. The asins of the products the rating distrubtion will be produced
+            for. 
+            sample_size (int): optional. Percentage of the data the query will run over.
+        
+        Returns:
+             tuple(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes', 'four_star_votes', 'five_star_votes): asin is the label for the book. productid is the unique identifier
+             for the product. one_star_votes is the number of one star reveiws the book received.
+             two_star_votes is the number of two star reveiws the book received. three_star_votes is the
+             number of three star reveiws the book received. four_star_votes is the number of four star
+             reveiws the book received. five_star_votes is the number of five star reveiws the book
+             received. """
+        
+        
         max_date_filter =  ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
 
         asin_filter = ' AND r.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
@@ -147,7 +167,7 @@ class Products(SqlSource):
                })
         
     @log
-    def clusterQuery(self, min_date='1900-1-1', max_date=None, sample_size=100):
+    def statsByProduct(self, min_date='1900-1-1', max_date=None, sample_size=100):
         """For each book the product id, asin, the number of times it was purchased, 
         the average star rating, the product category, and days the product has been on sale 
         is returned.
@@ -169,10 +189,11 @@ class Products(SqlSource):
         query = ('''
                   SELECT orderlines.productid,
                       products.asin,
-                      count(*) as num_orders,
+                      count(*) as numOrders,
                       avg(r.overall) as avgrating,
                       products.nodeid as category,
-                      DATE_PART('day', max(shipdate)::TIMESTAMP - min(shipdate)::TIMESTAMP) as days_on_sale
+                      DATE_PART('day', max(shipdate)::TIMESTAMP - min(shipdate)::TIMESTAMP) as
+                      days_on_sale
                   FROM orderlines
                       JOIN products
                         ON orderlines.productid = products.productid
@@ -193,7 +214,18 @@ class Products(SqlSource):
                })
         
     @log
-    def clusterProducts(self,n_clusters=8,algorithm='auto',asin=None):
+    def clusterProducts(self,
+                         feature_set=None,
+                         n_clusters=8,
+                         algorithm='auto',
+                         cluster_on=[
+                             'numorders',
+                             'avgrating',
+                             'category',
+                             'days_on_sale'
+                         ],
+                         asin=None,
+                         scale=False):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
         results as the features (num_orders, avgrating, category, and days_on_sale).
 
@@ -209,29 +241,56 @@ class Products(SqlSource):
              tuple(productid, asin, y_pred): productid is the products unqiue identifier. asin is the
              identification of the book. y_pred is the label of the clsuter that the product belongs to.
         """
-        response=self.clusterQuery()
-        data=pd.DataFrame(response.results)
-        data.columns=response.columns
+        if feature_set is None:
+            feature_set = self.statsByProduct()
+        if (not hasattr(feature_set, 'results')) | (not hasattr(feature_set, 'columns')):
+            raise Exception('invalid feature set, no results or columns')
+        
+        
+
+        data=pd.DataFrame(feature_set.results, columns=feature_set.columns)
+        
         if asin is None:
             input_centers='k-means++'
-            X=data[['num_orders','avgrating','category','days_on_sale']].values
+            X = (
+                    data[cluster_on].values
+                    if scale is False
+                    else StandardScaler().fit_transform(data[cluster_on].values)
+                )
+
         else:
-            #input_centers=data.loc[data['asin'].isin([%(asin_list)s])]
+
             asin_s=set(asin)
             input_centers=data[data['asin'].isin(asin)]
-            input_centers=input_centers[['num_orders','avgrating','category','days_on_sale']].values
-            #X=data.loc[~data['asin'].isin([%(asin_list)])]
+            input_centers=input_centers[cluster_on].values
+
             data=data[~data['asin'].isin(asin)]
-            X=data[['num_orders','avgrating','category','days_on_sale']].values
-        X=StandardScaler().fit_transform(X)
-        #algorithm=KMeans(n_clusters=%(n_clusters), algorithm=%(algorithm),init=input_centers)
+            X = (
+                    data[cluster_on].values
+                    if scale is False
+                    else StandardScaler().fit_transform(data[cluster_on].values)
+                )
+        
+        clustering = pd.DataFrame(X, columns=cluster_on)
+        
         algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers)
         algorithm.fit_predict(X)
-        y_pred=algorithm.labels_
-        clustering=data[['productid','asin']]
-        clustering.loc[:,'y_pred']=y_pred
         
-        return clustering
+        for col in feature_set.columns:
+            if col not in clustering.columns.values:
+                clustering.loc[:, col] = data[col]
+        
+
+        response_columns=np.append(clustering.columns.values,'cluster')
+        clustering.loc[:, 'cluster'] = algorithm.labels_
+        
+        
+        response = QueryResponse(
+            columns=response_columns,
+            results=[tuple(x) for x in clustering.values]
+        )
+        
+        return response
     
     
                                           
