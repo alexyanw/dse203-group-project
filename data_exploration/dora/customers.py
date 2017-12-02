@@ -42,6 +42,7 @@ class Customers(SqlSource):
                 '''
                 + max_date_filter
                 + '''
+                AND orders.orderdate>%(min_date)s
             GROUP BY HouseholdID
             ORDER By count(orders) DESC''')
 
@@ -54,13 +55,10 @@ class Customers(SqlSource):
             })
 
     @log
-    def membersOfHousehold(self, min_date=None, max_date=None,householdID=0, sample_size=100):
+    def membersOfHousehold(self,householdID=0, sample_size=100):
         """For each household, find the customerid, firstname, and gender for each member. 
         
         Args:
-            min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
             householdID (stirng): optional. The householdID that the members will be found of.
             sample_size (int): optional. Percentage of the data the query will run over.
         
@@ -75,15 +73,13 @@ class Customers(SqlSource):
             WHERE householdid=%(householdID)s''')
         return self._execSqlQuery(query,
             {
-                'min_date': min_date,
-                'max_date': max_date,
                 'householdID':householdID,
                 'sample_size': sample_size,
                 'random_seed': self._random_seed
             })
 
     @log
-    def productsByHousehold(self, min_date=None, max_date=None, householdID=0, sample_size=100):
+    def productsByHousehold(self, min_date='1900-1-1', max_date=None, householdID=0, sample_size=100):
         """For each household, all of the products that have been purchased.  
         
         Args:
@@ -97,6 +93,8 @@ class Customers(SqlSource):
              tuple(productid, asin, gender): product is the unique product id. asin is the product code
              of the product that was purchased. """
         
+        max_date_filter = ' AND orders.orderdate <= %(max_date)s ' if max_date else ' '
+        
         query=('''
 	    SELECT
 	        distinct(products.productid), products.ASIN
@@ -105,7 +103,12 @@ class Customers(SqlSource):
                 orderlines.productid = products.productid AND 
                 orderlines.orderid = orders.orderid AND
                 orders.customerid = customers.customerid AND
-                customers.householdid=%(householdID)s''')
+                customers.householdid=%(householdID)s AND
+                orders.orderdate > %(min_date)s
+                '''
+                + max_date_filter
+                + ''' 
+                ''')
         return self._execSqlQuery(query,
             {
                 'min_date': min_date,
