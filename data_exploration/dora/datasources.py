@@ -196,6 +196,18 @@ class SqlSource(Cacheable):
         if self._postgres_conn:
             self._postgres_conn.close()
 
+    def _execSqlInsert(self,query, params=None):
+        try:
+            c = self._postgres_conn.cursor()
+            c.execute(query, params)
+            self._postgres_conn.commit()
+            c.close()
+        except:
+            c.close()
+            return False
+
+        return True
+
     def _execSqlQuery(self,query, params=None):
         c = self._postgres_conn.cursor()
 
