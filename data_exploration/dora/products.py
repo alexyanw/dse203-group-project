@@ -54,11 +54,9 @@ class Products(SqlSource):
               GROUP BY p.asin, p.productid''')
 
         return self._execSqlQuery(query,
-                                  {
-
-                                      'asin_list': tuple(asin)
-
-                                  })
+            {
+              'asin_list': tuple(asin)
+            })
 
 
     @log
