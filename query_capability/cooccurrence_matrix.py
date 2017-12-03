@@ -4,11 +4,20 @@ from functools import reduce
 
 # CoOccurrenceMatrix(productA, productB, total_count, zipcode, gender, start_date, end_date)
 class CoOccurrenceMatrix:
+    schema = {
+        'customer_product' : ['customerid', 'productid', 'likes', 'gender', 'orderdate','orderstate'],
+        'cooccurrence_matrix' : ['product_a', 'product_b', 'paircount'],
+    }
+
     def __init__(self):
-        self.schema_map = {
-            'customer_product' : (self.get_customer_product, ['customerid', 'productid', 'likes', 'gender', 'orderdate','orderstate']),
-            'cooccurrence_matrix' : (self.get_cooccurrence_matrix, ['product_a', 'product_b', 'pair_count']),
-        }
+        None
+
+    @classmethod
+    def getColumn(cls, table, idx):
+        if table not in cls.schema:
+            print("Required view '{}' doesn't exist\n".format(table))
+            exit(1)
+        return cls.schema[table][idx]
 
     def _execute(self, viewname, cmd, **kwargs):
         dbcmd = kwargs.get('prefix', '')
@@ -33,7 +42,7 @@ WHERE o.customerid = c.customerid and ol.orderid = o.orderid and pr.productid = 
     def get_cooccurrence_matrix(self, **kwargs):
         cmd = '''
 SELECT cp1.productid as product_a, cp2.productid as product_b, count(cp1.customerid) as paircount
-FROM cust_prod cp1, cust_prod cp2
+FROM customer_product cp1, customer_product cp2
 WHERE cp1.customerid = cp2.customerid AND cp1.productid < cp2.productid
 GROUP BY cp1.productid, cp2.productid
 ORDER BY COUNT(cp1.customerid)  DESC
@@ -47,4 +56,4 @@ ORDER BY COUNT(cp1.customerid)  DESC
         if table in [None, 'cooccurrence_matrix']:
             views.append(self.get_cooccurrence_matrix(**kwargs))
         return views
-	
+

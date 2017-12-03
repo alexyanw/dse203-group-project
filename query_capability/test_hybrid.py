@@ -116,7 +116,7 @@ datalog7 = [
 ]
 
 # view resolved in combiner
-datalog = [
+datalog8 = [
     {
     'result': 'temp(pid, cat, nunits, price)',
     'table': ['postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
@@ -134,12 +134,23 @@ datalog = [
     }
 ]
 
+# distinct = group by without aggregation
+datalog = [
+    {
+    'result': 'Ans(pid)',
+    'table': ['postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
+           ],
+    'groupby': { 'key': 'pid'},
+    'limit': '10'
+    }
+]
+
 # using local server, everything default
 #engine = HybridEngine()
 engine = HybridEngine(
                 postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
                 asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
                 solr= {'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
-#result = engine.queryDatalog(datalog, debug=True)
-result = engine.queryDatalog(datalog1)
+result = engine.queryDatalog(datalog, debug=True)
+#result = engine.queryDatalog(datalog)
 print(result)

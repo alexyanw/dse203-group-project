@@ -40,13 +40,6 @@ class PostgresEngine:
         df = pd.read_sql_query(cmd, self.pg_conn)
         return df
 
-    def queryView(self, view, features, **kwargs):
-        if view not in self.schema_wrapper: 
-            print("Error: view '{}' not defined".format(view))
-            exit(1)
-
-        return self.schema_wrapper[table]().get_views(features, **kwargs)
-
     def query(self, datalog, **kwargs):
         builder = SQLBuilder(datalog, self.schema_wrapper)
         views = []
@@ -57,7 +50,7 @@ class PostgresEngine:
         sqlcmd = builder.getQueryCmd()
 
         if views:
-            sqlcmd = "WITH {}\n{}".format(",\n".join(set(views)), sqlcmd)
+            sqlcmd = "WITH {}\n{}".format(",\n".join(views), sqlcmd)
 
         return self.executeQuery(sqlcmd, **kwargs)
 
