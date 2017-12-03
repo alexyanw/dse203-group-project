@@ -1,4 +1,5 @@
 import pandas as pd
+import math
 
 class Writeback:
     schema = {
@@ -43,14 +44,13 @@ class Writeback:
 
     def write(self, table, df):
         schema = self.engine.get_schema(table)
-        print(schema)
         if not self.validate_schema(schema, df): exit(1)
 
         size = df.shape[1]
         for i in range(math.ceil(size/self.batch_size)):
             start = i * self.batch_size
             end = start + self.batch_size
-            self.engine.write(table, df[start:end])
+            self.engine.insert(table, df[start:end])
 
     def validate_schema(self, schema, df):
         # check columns

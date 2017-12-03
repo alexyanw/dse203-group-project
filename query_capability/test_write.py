@@ -12,5 +12,6 @@ df = pd.DataFrame({
         'rank': [1, 2, 1],
         })
 engine = HybridEngine()
-#engine.writeback('RecommendationContent', df)
+engine.execute('drop table RecommendationColaborative')
 engine.create('RecommendationColaborative')
+engine.write('RecommendationColaborative', df)

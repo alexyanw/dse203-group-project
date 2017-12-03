@@ -90,7 +90,7 @@ class HybridEngine:
     def create(self, table):
         self.writeback.create(table)
 
-    def writeback(self, table, df):
+    def write(self, table, df):
         self.writeback.write(table, df)
 
     def execute(self, sqlcmd):

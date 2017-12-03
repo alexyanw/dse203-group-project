@@ -4,7 +4,7 @@ from source_schema import SourceTable
 from product_view import ProductView
 from customer_view import CustomerView
 from cooccurrence_matrix import CoOccurrenceMatrix
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,Table,MetaData
 from sqlalchemy.sql import text
 
 
@@ -62,8 +62,14 @@ class PostgresEngine:
         return self.executeQuery(sqlcmd, **kwargs)
 
     def get_schema(self, table):
-        sqlcmd = "select column_name, data_type from information_schema.columns where table_name = '{}'".format(table)
-        return self.execute(sqlcmd)
+        sqlcmd = "select column_name, data_type from information_schema.columns where table_name = '{}'".format(table.lower())
+        result = self.execute(sqlcmd)
+        schema = {}
+        for row in result:
+            print(row, type(row))
+            schema[row[0]] = row[1]
+
+        return schema
 
     def create_table(self, table, schema):
         sqlcmd = "CREATE TABLE {}(\n".format(table)
@@ -75,10 +81,16 @@ class PostgresEngine:
 
         self.execute(sqlcmd)
 
-    def writeback(self, table, df):
-        None
-
     def execute(self, sqlcmd):
         statement = text(sqlcmd)
         self.pg_conn = create_engine(self.dburl)
-        self.pg_conn.execute(statement)
+        return self.pg_conn.execute(statement)
+
+    def insert(self, table, df):
+        self.pg_conn = create_engine(self.dburl)
+        meta = MetaData()
+        meta.reflect(bind=self.pg_conn)
+        sqltb = meta.tables[table.lower()]
+        data = list(df.T.to_dict().values())
+        print(type(data[0]), data)
+        self.pg_conn.execute(sqltb.insert(), data)
