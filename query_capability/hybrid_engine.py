@@ -53,13 +53,14 @@ class HybridEngine:
         elif self.mode in ['view']:
             source_results = [self.querySubDatalog(p, **kwargs) for p in self.parsers[:1]]
 
+        if 'debug' in kwargs: return None
         combiner = Combiner(self.mode, source_results, self.parsers)
         return combiner.process(**kwargs)
 
     def querySubDatalog(self, parser, **kwargs):
         source_result = self.arbiter(parser, **kwargs)
         if 'debug' in kwargs:
-            self.debugPrint(source_results)
+            self.debugPrint(source_result)
             return None
         return source_result
 

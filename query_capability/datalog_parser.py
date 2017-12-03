@@ -8,7 +8,7 @@ __all__ = ['DatalogParser']
 class DatalogParser:
     def __init__(self, q):
         self._result = q['result']          # Ans(numunits, firstname, billdate)
-        self.conditions = q['condition']    # ['orders.orderid > 1000', 'orders.numunits > 1']
+        self.conditions = q.get('condition', None)    # ['orders.orderid > 1000', 'orders.numunits > 1']
 
         tables = q['table'] # ['orders(numunits, customerid, orderid)', 'customers(firstname, customerid)', 'orderlines(billdate, orderid)']
 
@@ -39,10 +39,10 @@ class DatalogParser:
         ''' 'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},'''
         aggregation = {}
         if not groupby: return aggregation
-        if 'key' not in groupby or 'aggregation' not in groupby:
+        if 'key' not in groupby or not set(groupby.keys()).issubset(set(['key','aggregation'])):
             print("groupby must be dict of {key: ..., aggregation: ...}\n")
             exit(1)
-        groupkey,aggs = groupby['key'], groupby['aggregation']
+        groupkey,aggs = groupby['key'], groupby.get('aggregation', {})
         source,table = list(self.column_to_table[groupkey].items())[0]
         self.groupby = {'source': source, 'table':table, 'column': groupkey}
         
@@ -149,6 +149,7 @@ class DatalogParser:
 
     def getTableConditions(self, conditions):
         cond_map = {}
+        if not conditions: return cond_map
         for cond in conditions:
             match = re.search("(\S+)\s*([>=<]+)\s*(.+)", cond)
             if not match:
