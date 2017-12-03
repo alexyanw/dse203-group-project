@@ -8,8 +8,27 @@ import numpy as np
 
 class Products(SqlSource):
     @log
-    def priceDistribution(self, asin=[]):
-        asin_filter = ' WHERE r.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
+    def priceDistribution(self, asin=[], bins=5):
+        asin_filter = ' WHERE p.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
+
+        bin_ranges = []
+
+        range_response = self._execSqlQuery('''
+            SELECT
+                COALESCE(MAX(unitprice),0) as max,
+                COALESCE(MIN(unitprice),0) as min
+            FROM products p
+            JOIN orderlines o
+                ON p.productid = o.productid'''
+            + asin_filter,{'asin_list':tuple(asin)})
+
+        range = [
+            range_response.results[0][1],
+            range_response.results[0][0]
+        ]
+
+
+
 
     @log
     def seasonalOrderDistribution(self, asin=[]):
@@ -47,7 +66,7 @@ class Products(SqlSource):
                     CASE
                       WHEN
                         DATE_PART('month',o.billdate) >= 12
-                        AND DATE_PART('month',o.billdate) <= 2
+                        OR DATE_PART('month',o.billdate) <= 2
                       THEN 1
                       ELSE 0
                     END) as winter_sales
