@@ -5,6 +5,7 @@ from asterix_engine import AsterixEngine
 from solr_engine import SolrEngine
 from datalog_parser import DatalogParser
 from combiner import Combiner
+from writeback import Writeback
 
 __all__ = ['HybridEngine']
 
@@ -15,6 +16,7 @@ class HybridEngine:
         self.engines['asterix'] = AsterixEngine(kwargs['asterix']) if 'asterix' in kwargs else AsterixEngine()
         self.engines['solr'] = SolrEngine(kwargs['solr']) if 'solr' in kwargs else SolrEngine()
         self.mode = None
+        self.writeback = Writeback(self.engines['postgres'])
 
     def analyze(self, datalog, **kwargs):
         #if type(datalog) is dict: return self.querySubDatalog(datalog)
@@ -32,6 +34,7 @@ class HybridEngine:
             self.mode = 'single'
         elif 'view' in sources and len(sources) == 2:
             self.mode = 'single_view'
+            #fatal("single source view not supported yet")
         elif len(set([p.return_table for p in self.parsers])) == 1:
             self.mode = 'union'
         elif len(self.parsers) == 2:
@@ -47,17 +50,18 @@ class HybridEngine:
         if self.mode in ['single', 'union']:
             source_results = [self.querySubDatalog(p, **kwargs) for p in self.parsers]
         elif self.mode == 'single_view':
-            exit(1)
+            source_results = [self.querySubDatalog(p, **kwargs) for p in self.parsers[:1]]
         elif self.mode in ['view']:
             source_results = [self.querySubDatalog(p, **kwargs) for p in self.parsers[:1]]
 
+        if 'debug' in kwargs: return None
         combiner = Combiner(self.mode, source_results, self.parsers)
         return combiner.process(**kwargs)
 
     def querySubDatalog(self, parser, **kwargs):
         source_result = self.arbiter(parser, **kwargs)
         if 'debug' in kwargs:
-            self.debugPrint(source_results)
+            self.debugPrint(source_result)
             return None
         return source_result
 
@@ -79,10 +83,20 @@ class HybridEngine:
                 'conditions': parser.table_conditions.get(source,None),
                 'join': parser.join_path.get(source, None),
                 'groupby': parser.groupby if parser.single_source() else None,
+                'orderby': parser.orderby if parser.single_source() else None,
                 'limit': parser.limit if parser.single_source() else None,
                 }
             results[source] = self.engines[source].query(subquery, **kwargs)
         return results
+
+    def create(self, table):
+        self.writeback.create(table)
+
+    def write(self, table, df):
+        self.writeback.write(table, df)
+
+    def execute(self, sqlcmd):
+        self.engines['postgres'].execute(sqlcmd)
 
     def debugPrint(self, sub_results):
         for source in sub_results:
