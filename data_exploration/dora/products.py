@@ -8,8 +8,12 @@ import numpy as np
 
 class Products(SqlSource):
     @log
-    def seasonalOrderDistribution(self, asin=[]):
+    def priceDistribution(self, asin=[]):
         asin_filter = ' WHERE r.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
+
+    @log
+    def seasonalOrderDistribution(self, asin=[]):
+        asin_filter = ' WHERE p.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
 
         query = ('''
             SELECT
