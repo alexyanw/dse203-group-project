@@ -24,6 +24,7 @@
    /* <article> tag is our 'content area' */
    article{ width:75%; }
    h1{ padding:0;margin:0 0 20px 0; }
+   h3{text-decoration: underline}
    
    /* section */
    article section{ padding:0; }
@@ -47,9 +48,7 @@
 <article>
 <p>Navigation: {{ header_ahref|safe }}</p>
 <hr>
-<h2>
-<p>Customer Info</p>
-</h2>
+<h2>Customer Info</h2>
 <p><b>CustomerID:</b> {{ arg_custid }}</p>
 <p><b>Category Encoding:</b> {{ arg_catidlist }}</p>
 <p><b>Demographic Encoding:</b> {{ get_demoid }}</p>
@@ -67,7 +66,7 @@
 <p><b>Runtime:</b> {{time_hybridrec}}</p>
 <hr>
 <h2>Books in Category</h2>
-<p>Number: {{ get_book_num }}</p>
+<p><b>Number:</b> {{ get_book_num }}</p>
 </article>
 </body>
 </div>
