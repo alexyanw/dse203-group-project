@@ -63,6 +63,8 @@ class SQLBuilder:
             dbcmd += "\nWHERE " + ' AND '.join(conditions)
         if self.datalog['groupby']:
             dbcmd += "\nGROUP BY {} ".format(self.getColumnName(self.datalog['groupby']['table'], self.datalog['groupby']['column'])) 
+        if self.datalog['orderby']:
+            dbcmd += "\nORDER BY {} ".format(self.datalog['orderby']) 
         if self.datalog['limit']:
             dbcmd += "\nLIMIT " + self.datalog['limit']
         return dbcmd

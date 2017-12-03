@@ -7,9 +7,28 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 class Customers(SqlSource):
+    @log
+    def statsByHousehold(self, min_date='1900-1-1', max_date=None, sample_size=100):
+        """For each household find the total amount spent, the total number of order, the orderdate of
+        thefirst and last order, the time spent as customer and the time since the last order.  
 
-    def statsByHousehold(self, min_date=None, max_date=None, sample_size=100, order_by='TotalOrders'):
-        return self._execSqlQuery('''
+        Args:
+            min_date (string): optional. date. Limits the search result timeframe.
+            max_date (string): optional. date. Limits the timeframe for which 
+            customers results will be returned
+            sample_size (int): optional. Percentage of the data the query will run over.
+        
+        Returns:
+             tuple(householdid, TotalSpent, TotalOrders, first_order, last_order, time_as_customer,
+             time_since_last_order): householdid is the unique household id. TotalSpent is the amount of
+             money spenton all order. TotalOrders is the number of orders that have been made by that
+             household. first_order is the time when the first order was made. last_order is the time
+             since the lastorder. time_as_customer is the time the members of the household has been
+             customers. """
+        
+        max_date_filter = ' AND o.orderdate <= %(max_date)s ' if max_date else ' '
+        
+        query=('''
 	    SELECT
 	        customers.householdid as HouseholdID,
                 sum(orders.totalprice) as TotalSpent,
@@ -20,17 +39,63 @@ class Customers(SqlSource):
                 age(max(orderdate)) as time_since_last_order
             FROM orders, customers 
             WHERE orders.customerid=customers.customerid and customers.customerid != 0
-            GROUP BY HouseholdID order by {} DESC'''.format(order_by))
+                '''
+                + max_date_filter
+                + '''
+                AND orders.orderdate>%(min_date)s
+            GROUP BY HouseholdID
+            ORDER By count(orders) DESC''')
 
-    def membersOfHousehold(self, min_date=None, max_date=None, sample_size=100, householdID=0):
-        return self._execSqlQuery('''
+        return self._execSqlQuery(query,
+            {
+                'min_date': min_date,
+                'max_date': max_date,
+                'sample_size': sample_size,
+                'random_seed': self._random_seed
+            })
+
+    @log
+    def membersOfHousehold(self,householdID=0, sample_size=100):
+        """For each household, find the customerid, firstname, and gender for each member. 
+        
+        Args:
+            householdID (stirng): optional. The householdID that the members will be found of.
+            sample_size (int): optional. Percentage of the data the query will run over.
+        
+        Returns:
+             tuple(customerid, firstname, gender): customerid is the unique customer id. firstname is the
+             name of the customer. gender is the gender of the customer. """
+        
+        query=('''
 	    SELECT
                 customerid, firstname, gender 
             FROM customers 
-            WHERE householdid={}'''.format(householdID))
+            WHERE householdid=%(householdID)s''')
+        return self._execSqlQuery(query,
+            {
+                'householdID':householdID,
+                'sample_size': sample_size,
+                'random_seed': self._random_seed
+            })
 
-    def productsByHousehold(self, min_date=None, max_date=None, sample_size=100, householdID=0):
-        return self._execSqlQuery('''
+    @log
+    def productsByHousehold(self, min_date='1900-1-1', max_date=None, householdID=0, sample_size=100):
+        """For each household, all of the products that have been purchased.  
+        
+        Args:
+            min_date (string): optional. date. Limits the search result timeframe.
+            max_date (string): optional. date. Limits the timeframe for which 
+            customers results will be returned
+            householdID (stirng): optional. The householdID that the members will be found of.
+            sample_size (int): optional. Percentage of the data the query will run over.
+        
+        Returns:
+             tuple(productid, asin, gender): product is the unique product id. asin is the product code
+             of the product that was purchased. """
+        
+        max_date_filter = ' AND orders.orderdate <= %(max_date)s ' if max_date else ' '
+        
+        query=('''
 	    SELECT
 	        distinct(products.productid), products.ASIN
             FROM orderlines, products, orders, customers
@@ -38,7 +103,20 @@ class Customers(SqlSource):
                 orderlines.productid = products.productid AND 
                 orderlines.orderid = orders.orderid AND
                 orders.customerid = customers.customerid AND
-                customers.householdid={}'''.format(householdID))
+                customers.householdid=%(householdID)s AND
+                orders.orderdate > %(min_date)s
+                '''
+                + max_date_filter
+                + ''' 
+                ''')
+        return self._execSqlQuery(query,
+            {
+                'min_date': min_date,
+                'max_date': max_date,
+                'householdID':householdID,
+                'sample_size': sample_size,
+                'random_seed': self._random_seed
+            })
 
     @log
     def idsForCustomer(self, customermatchedids = []):
@@ -63,11 +141,15 @@ class Customers(SqlSource):
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(numOrders, gender, zipcode, householdid, firstname, TotalSpent): numOrders 
-             is the number of times a customer has purchased a book. gender is the gender of the 
-             customer. zipcode identifiies the customers location. householdid is the customer's 
-             hosuehold identification. firstname is the customer's name. TotalSpent is the total 
-             amount the customer has spent on books. 
+             tuple(numOrders, gender, zipcode, TotalPop, MedianAge, TotalMales, TotalFemales,
+             TotalSpent,householdid, firstname,numCustomerid ): numOrders is the number of times a
+             customer has purchased a book. gender is the gender of the customer. zipcode identifiies 
+             the customers location.  TotalPop is the total population for the zipcode. MedianAge is 
+             the median age of the population for the zipcode. TotalMales is the total number of males 
+             of the population for the zipcode. TotalFemales is the total number of females of the
+             population for the zipcode. TotalSpent is the total amount the customer has spent on books. 
+             householdid is the customer's hosuehold identification. firstname is the customer's name.
+             numCustomerid is the number of customerids per customer.
         """
         
         max_date_filter = ' AND o.orderdate <= %(max_date)s ' if max_date else ' '
@@ -142,12 +224,12 @@ class Customers(SqlSource):
                          cluster_on=[
                              'numorders',
                              'gender',
-                             #'totalpop',
+                             'totalpop',
                              'totalspent',
                              'zipcode',
-                             #'medianage',
-                             #'totalmales',
-                             #'totalfemales'
+                             'medianage',
+                             'totalmales',
+                             'totalfemales'
                          ],
                          scale=False):
         """Clusters the customers together based on gender, zipcode, numOrders, and TotalSpent. 
@@ -170,10 +252,18 @@ class Customers(SqlSource):
             cluster_on (list of str): column names to use as cluster features
         
         Returns:
-             tuple(clusteringScaled, clustering, centers): clusteringScaled is a dataframe of the
-             inputdata normalized and the predicted labels for the cluster. clustering is a dataframe 
-             of the data and has a y_pred column which is the cluster label for the customer. centers 
-             is an array of the cluster centers.
+             tuple(numorders', 'gender', 'totalpop', 'totalspent', 'zipcode', 'customermatchedid',
+             'medianage', 'totalmales', 'totalfemales', 'householdid', 'firstname', 'numcustomerid',
+             'cluster', 'customerids): numOrders is the number of times a customer has purchased a book.
+             gender is the gender of the customer. zipcode identifiies the customers location.  TotalPop
+             is the total population for the zipcode. MedianAge is the median age of the population for
+             the zipcode. customermatchedid is the number of customerids that matched with the customer.
+             TotalMales is the total number of males of the population for the zipcode. TotalFemales is
+             the totalnumber of females of the population for the zipcode. TotalSpent is the total amount
+             the customer has spent on books. householdid is the customer's hosuehold identification.
+             firstname is the customer's name.numCustomerid is the number of customerids per customer.
+             cluster is the label of the cluster the customer belongs to. customerids is a list of all
+             the customerids that correspond to that customer. 
         """
         if feature_set is None:
             feature_set = self.statsByCustomer()
@@ -184,6 +274,8 @@ class Customers(SqlSource):
 
         data = pd.DataFrame(feature_set.results, columns=feature_set.columns)
         data[cluster_on] = data[cluster_on].apply(pd.to_numeric, errors='coerce', axis=1)
+        if (data[cluster_on].isnull().values.any())==True:
+            data=data.dropna()
 
         X = (
             data[cluster_on].values

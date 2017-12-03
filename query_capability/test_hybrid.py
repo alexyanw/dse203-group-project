@@ -9,6 +9,7 @@ datalog1 = [
             'postgres.orderlines(orderLineId, orderid, productId, shipDate, billdate, unitPrice, numunits, _)',
            ],
     'condition': ['orderid > 1000', 'numunits > 1'],
+    'orderby': 'numunits DESC',
     'limit': '10'
     }
 ]
@@ -136,9 +137,9 @@ datalog = [
 # using local server, everything default
 #engine = HybridEngine()
 engine = HybridEngine(
-                postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': ''},
+                postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
                 asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
                 solr= {'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
 #result = engine.queryDatalog(datalog, debug=True)
-result = engine.queryDatalog(datalog)
+result = engine.queryDatalog(datalog1)
 print(result)
