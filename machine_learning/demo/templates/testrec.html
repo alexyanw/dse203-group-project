@@ -50,19 +50,24 @@
 <h2>
 <p>Customer Info</p>
 </h2>
-<p>CustomerID: {{ arg_custid }}</p>
-<p>Category Encoding: {{ arg_catidlist }}</p>
-<p>Demographic Encoding: {{ get_demoid }}</p>
-<p>Purchases: {{ get_purchases }}</p>
+<p><b>CustomerID:</b> {{ arg_custid }}</p>
+<p><b>Category Encoding:</b> {{ arg_catidlist }}</p>
+<p><b>Demographic Encoding:</b> {{ get_demoid }}</p>
+<p><b>Purchases:</b> {{ get_purchases }}</p>
 <hr>
 <h2>Recommend</h2>
-<p>Collaborative Filtering Rec: {{ get_collabrec }}</p>
-<p>Content Filtering Rec: {{ get_contentrec }}</p>
-<p>Hybrid Rec: {{ get_hybridrec }}</p>
+<h3>Collaborative Filtering Rec</h3>
+<p><b>Results:</b> {{ get_collabrec }}</p>
+<p><b>Runtime:</b> {{time_collabrec}}</p>
+<h3>Content Filtering Rec</h3>
+<p><b>Results:</b> {{ get_contentrec }}</p>
+<p><b>Runtime:</b> {{time_contentrec}}</p>
+<h3>Hybrid Rec</h3>
+<p><b>Results:</b> {{ get_hybridrec }}</p>
+<p><b>Runtime:</b> {{time_hybridrec}}</p>
 <hr>
 <h2>Books in Category</h2>
 <p>Number: {{ get_book_num }}</p>
-<p>List: {{ get_book_list }}</p>
 </article>
 </body>
 </div>
