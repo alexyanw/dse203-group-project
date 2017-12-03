@@ -7,7 +7,60 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 class Products(SqlSource):
-    
+    @log
+    def seasonalOrderDistribution(self, asin=[]):
+        asin_filter = ' WHERE r.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
+
+        query = ('''
+            SELECT
+                asin,
+                productid,
+                SUM(
+                    CASE
+                      WHEN
+                        MONTH(o.billdate) >= 3
+                        AND MONTH(o.billdate) <= 5
+                      THEN 1
+                      ELSE 0
+                    END) as spring_sales,
+                SUM(
+                    CASE
+                      WHEN
+                        MONTH(o.billdate) >= 6
+                        AND MONTH(o.billdate) <= 8
+                      THEN 1
+                      ELSE 0
+                    END) as summer_sales,
+                SUM(
+                    CASE
+                      WHEN
+                        MONTH(o.billdate) >= 9
+                        AND MONTH(o.billdate) <= 11
+                      THEN 1
+                      ELSE 0
+                    END) as fall_sales,
+                SUM(
+                    CASE
+                      WHEN
+                        MONTH(o.billdate) >= 12
+                        AND MONTH(o.billdate) <= 2
+                      THEN 1
+                      ELSE 0
+                    END) as winter_sales,
+              FROM products p
+              JOIN orderlines o
+                ON p.productid = o.productid '''
+              + asin_filter + '''
+              GROUP BY p.asin, p.productid''')
+
+        return self._execSqlQuery(query,
+                                  {
+
+                                      'asin_list': tuple(asin)
+
+                                  })
+
+
     @log
     def ratingsDistribution(self, min_date='1900-1-1', max_date=None,asin=[], sample_size=100):
         """For each product, determine the how many 1, 2, 3, 4, and 5 star reviews the product received. 
