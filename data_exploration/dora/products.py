@@ -13,40 +13,40 @@ class Products(SqlSource):
 
         query = ('''
             SELECT
-                asin,
-                productid,
+                p.asin,
+                p.productid,
                 SUM(
                     CASE
                       WHEN
-                        MONTH(o.billdate) >= 3
-                        AND MONTH(o.billdate) <= 5
+                        DATE_PART('month',o.billdate) >= 3
+                        AND DATE_PART('month',o.billdate) <= 5
                       THEN 1
                       ELSE 0
                     END) as spring_sales,
                 SUM(
                     CASE
                       WHEN
-                        MONTH(o.billdate) >= 6
-                        AND MONTH(o.billdate) <= 8
+                        DATE_PART('month',o.billdate) >= 6
+                        AND DATE_PART('month',o.billdate) <= 8
                       THEN 1
                       ELSE 0
                     END) as summer_sales,
                 SUM(
                     CASE
                       WHEN
-                        MONTH(o.billdate) >= 9
-                        AND MONTH(o.billdate) <= 11
+                        DATE_PART('month',o.billdate) >= 9
+                        AND DATE_PART('month',o.billdate) <= 11
                       THEN 1
                       ELSE 0
                     END) as fall_sales,
                 SUM(
                     CASE
                       WHEN
-                        MONTH(o.billdate) >= 12
-                        AND MONTH(o.billdate) <= 2
+                        DATE_PART('month',o.billdate) >= 12
+                        AND DATE_PART('month',o.billdate) <= 2
                       THEN 1
                       ELSE 0
-                    END) as winter_sales,
+                    END) as winter_sales
               FROM products p
               JOIN orderlines o
                 ON p.productid = o.productid '''
