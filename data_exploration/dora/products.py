@@ -95,12 +95,13 @@ class Products(SqlSource):
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes', 'four_star_votes', 'five_star_votes): asin is the label for the book. productid is the unique identifier
-             for the product. one_star_votes is the number of one star reveiws the book received.
-             two_star_votes is the number of two star reveiws the book received. three_star_votes is the
-             number of three star reveiws the book received. four_star_votes is the number of four star
-             reveiws the book received. five_star_votes is the number of five star reveiws the book
-             received. """
+             tuple(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes',
+             'four_star_votes', 'five_star_votes): asin is the label for the book. productid is the
+             unique identifier for the product. one_star_votes is the number of one star reveiws the book
+             received. two_star_votes is the number of two star reveiws the book received. 
+             three_star_votes is the number of three star reveiws the book received. four_star_votes is
+             the number of four star reveiws the book received. five_star_votes is the number of five
+             star reveiws the book received. """
         
         
         max_date_filter =  ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
@@ -203,7 +204,7 @@ class Products(SqlSource):
               orders o
             WHERE
               o.orderid = ol.orderid
-              AND o.orderdate > %(min_date)s'''+max_date_filter+'''
+              AND o.orderdate >= %(min_date)s'''+max_date_filter+'''
               AND ol.orderid in (
                 SELECT orid.orderid
                 FROM (
@@ -296,7 +297,11 @@ class Products(SqlSource):
                              'numorders',
                              'avgrating',
                              'category',
-                             'days_on_sale'
+                             'days_on_sale',
+                             'spring_sales',
+                             'summer_sales',
+                             'fall_sales',
+                             'winter_sales'
                          ],
                          asin=None,
                          scale=False):
@@ -323,6 +328,12 @@ class Products(SqlSource):
         
 
         data=pd.DataFrame(feature_set.results, columns=feature_set.columns)
+        response=self.seasonalOrderDistribution()
+        df=pd.DataFrame(response.results,columns=response.columns)
+        data=data.merge(df, on=['productid','asin'],how='outer')
+        
+        if (data[cluster_on].isnull().values.any())==True:
+            data=data.dropna()
         
         if asin is None:
             input_centers='k-means++'
