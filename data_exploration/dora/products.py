@@ -278,7 +278,11 @@ class Products(SqlSource):
                              'numorders',
                              'avgrating',
                              'category',
-                             'days_on_sale'
+                             'days_on_sale',
+                             'spring_sales',
+                             'summer_sales',
+                             'fall_sales',
+                             'winter_sales'
                          ],
                          asin=None,
                          scale=False):
@@ -305,6 +309,12 @@ class Products(SqlSource):
         
 
         data=pd.DataFrame(feature_set.results, columns=feature_set.columns)
+        response=self.seasonalOrderDistribution()
+        df=pd.DataFrame(response.results,columns=response.columns)
+        data=data.merge(df, on=['productid','asin'],how='outer')
+        
+        if (data[cluster_on].isnull().values.any())==True:
+            data=data.dropna()
         
         if asin is None:
             input_centers='k-means++'
