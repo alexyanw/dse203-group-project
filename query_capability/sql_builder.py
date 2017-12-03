@@ -49,7 +49,7 @@ class SQLBuilder:
             for cond in conditions:
                 lop = self.getColumnName(table, cond[0])
                 rop = self.getColumnName(table, cond[2])
-                arith_conds.append("{} {} {}".format(lop, cond[1], rop))
+                arith_conds.append("{} {} '{}'".format(lop, cond[1], rop))
         return arith_conds
 
     def getQueryCmd(self):

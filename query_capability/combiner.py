@@ -14,6 +14,8 @@ class Combiner:
             return self.union(**kwargs)
         if self.mode == 'view':
             return self.resolve_view(**kwargs)
+        if self.mode == 'single_view':
+            return self.resolve_view(**kwargs)
 
     def resolve_single_query(self, **kwargs):
         sub_results = self.source_results[0]

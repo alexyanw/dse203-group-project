@@ -34,6 +34,7 @@ class HybridEngine:
             self.mode = 'single'
         elif 'view' in sources and len(sources) == 2:
             self.mode = 'single_view'
+            #fatal("single source view not supported yet")
         elif len(set([p.return_table for p in self.parsers])) == 1:
             self.mode = 'union'
         elif len(self.parsers) == 2:
@@ -49,7 +50,7 @@ class HybridEngine:
         if self.mode in ['single', 'union']:
             source_results = [self.querySubDatalog(p, **kwargs) for p in self.parsers]
         elif self.mode == 'single_view':
-            exit(1)
+            source_results = [self.querySubDatalog(p, **kwargs) for p in self.parsers[:1]]
         elif self.mode in ['view']:
             source_results = [self.querySubDatalog(p, **kwargs) for p in self.parsers[:1]]
 

@@ -2,13 +2,15 @@ import sys
 from sqlalchemy import create_engine
 from functools import reduce
 import re
+from utils import *
 
 __all__ = ['DatalogParser']
 
 class DatalogParser:
     def __init__(self, q):
+        self.validate(q)
         self._result = q['result']          # Ans(numunits, firstname, billdate)
-        self.conditions = q.get('condition', None)    # ['orders.orderid > 1000', 'orders.numunits > 1']
+        self.conditions = q.get('condition', [])    # ['orders.orderid > 1000', 'orders.numunits > 1']
 
         tables = q['table'] # ['orders(numunits, customerid, orderid)', 'customers(firstname, customerid)', 'orderlines(billdate, orderid)']
 
@@ -20,7 +22,7 @@ class DatalogParser:
         self.return_table = self.getReturnTable(self._result)
         self.join_columns = self.getJoinColumns(self.table_columns)
         self.table_conditions = self.getTableConditions(self.conditions)
-        #self.resolveNegation()
+        self.resolveNegation(tables)
 
         self.groupby = None
         self.aggregation = self.resolveAggregation(q.get('groupby'))
@@ -30,7 +32,34 @@ class DatalogParser:
         self.orderby = q.get('orderby', None)
         self.limit = q.get('limit', None)
 
-        self.validate()
+    def validate(self, datalog):
+        support_fields = set(['result', 'table', 'condition', 'groupby', 'orderby', 'limit'])
+        fields = set(datalog.keys())
+        if not fields.issubset(support_fields):
+            fatal("datalog doesn't support fields: {}".format(fields - support_fields))
+
+        if 'result' not in datalog:
+            fatal("datalog must has field 'result'")
+
+        if 'table' not in datalog:
+            fatal("datalog must has field 'table'")
+
+        if type(datalog['table']) is not list:
+            fatal("datalog field 'table' must be a list")
+
+        if 'condition' in datalog and type(datalog['condition']) is not list:
+            fatal("datalog field 'condition' must be a list")
+
+        groupby = datalog.get('groupby', None)
+        if groupby:
+            if 'key' not in groupby or not set(groupby.keys()).issubset(set(['key','aggregation'])):
+                fatal("groupby must be dict of {key: ..., aggregation: ...}")
+
+        return True
+       #for col in self.return_columns:
+       #    if col not in self.column_to_table:
+       #        raise Exception("return column '{}' in header doesn't exist in body!".format(col))
+
 
     def single_source(self):
         return True if len(self.source_tables) == 1 else False
@@ -39,9 +68,6 @@ class DatalogParser:
         ''' 'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},'''
         aggregation = {}
         if not groupby: return aggregation
-        if 'key' not in groupby or not set(groupby.keys()).issubset(set(['key','aggregation'])):
-            print("groupby must be dict of {key: ..., aggregation: ...}\n")
-            exit(1)
         groupkey,aggs = groupby['key'], groupby.get('aggregation', {})
         source,table = list(self.column_to_table[groupkey].items())[0]
         self.groupby = {'source': source, 'table':table, 'column': groupkey}
@@ -54,20 +80,15 @@ class DatalogParser:
 
         return aggregation
 
-    def validate(self):
-        return True
-       #for col in self.return_columns:
-       #    if col not in self.column_to_table:
-       #        raise Exception("return column '{}' in header doesn't exist in body!".format(col))
-
     def resolveSourceTables(self, tables):
         self.source_tables = {}
         self.column_to_table = {}
         for table in tables:
+            if re.search("not\s+(\w+)\.(\w+)\((.*)\)", table): continue # negation
+
             match = re.search("(\w+)\.(\w+)\((.*)\)", table)
             if not match:
-                print("datalog table '{}' must follow pattern <source>.<table>(col1, col2, ...)\n".format(table))
-                exit(1)
+                fatal("datalog table '{}' must follow pattern <source>.<table>(col1, col2, ...)".format(table))
             source, tablename, str_columns = match.group(1), match.group(2), match.group(3)
             self.table_column_idx[tablename] = {}
             if source not in self.source_tables: self.source_tables[source] = []
@@ -153,8 +174,7 @@ class DatalogParser:
         for cond in conditions:
             match = re.search("(\S+)\s*([>=<]+)\s*(.+)", cond)
             if not match:
-                print("bad condition pattern: {}".format(cond))
-                exit(1)
+                fatal("bad condition pattern: {}".format(cond))
             lop, op, rop = match.group(1), match.group(2), match.group(3)
             # HACK: suppose only 1 operand is column, and pure column in condition 
             tables = []
@@ -174,12 +194,15 @@ class DatalogParser:
                 cond_map[source][table].append([lop, op, rop])
         return cond_map
 
-    def resolveNegation(self):
+    def resolveNegation(self, tables):
         negation_map = {}
         negation_values = {}
-        for val in self.conditions:
+        true_tables = []
+        for val in tables:
             match = re.search('not (\S+)\((.*)\)', val)
-            if not match: continue
+            if not match:
+                true_tables.append(val)
+                continue
             table, columns = match.group(1), match.group(2)
             for idx, col in enumerate(columns.split(',')):
                 match = re.search('"(.*)"', col)
@@ -190,11 +213,19 @@ class DatalogParser:
                 if match:
                     negation_map[table+':'+str(idx)] = match.group(1)
 
-        for key,neg_value in negation_map.items():
+        for key,value in negation_map.items():
             table, idx = key.split(':')
-            negation_values[table] = { self._table_columns[table][int(idx)]: neg_value}
-        
-       #for table,negs in self.negation_values.items():
-       #    for n,v in negs.items():
-       #        self.conds.append("{}.{} != '{}'".format(table, n, v))
+            source,table = table.split('.')
+            colname = self.table_columns[table][int(idx)]
+            if colname != '_':
+                if source not in self.table_conditions: self.table_conditions[source] = { table: [] }
+                if table not in self.table_conditions[source]:
+                    self.table_conditions[source][table] = []
+                self.table_conditions[source][table].append([colname, '!=', value])
+                print("hhhh", value)
+            else:
+                fatal("negation value must have variable bound in table '{}'".format(table))
+                #self.table_columns[tablename] = re.sub('\s','', str_columns).split(',')
+                #self.table_column_idx[tablename][col] = idx
+                #self.column_to_table[col][source] = tablename
 
