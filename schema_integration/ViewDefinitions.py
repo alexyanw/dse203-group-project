@@ -72,11 +72,12 @@ def get_cols(q):
 def schema_searcher(name):
     ret ={}
     schema_defs= open('source_descriptions.txt','r').read()
+    schema_defs = schema_defs.lower()
 #    fp=schema_defs.find("CREATE TABLE "+name)
     #  CREATE\s*TABLE\s*Customers\s*\((.*)\)\s;
     #  'CREATE\s*TABLE\s*Customers\s*\((.*)\)\s*?;'
     def_string = 'CREATE\s*TABLE\s*%s\s*\((.*?)\)\s*?;'%name
-    match = re.search(def_string,schema_defs,re.DOTALL)
+    match = re.search(def_string,schema_defs,re.DOTALL|re.IGNORECASE)
     if match:
         col_text=match.group(1)
         col_list = col_text.split(',')
@@ -130,6 +131,7 @@ def schema_matcher(head_cols,body_cols):
 def define_mapping(map_str):
     #remove all white spaces
     map_str = map_str.replace(' ','')
+    map_str = map_str.lower()
     #check for head
     [head,body]       = map_str.split('->')
     head_view  = head.split('(')[0]
@@ -174,7 +176,7 @@ def define_mapping(map_str):
 
 
 
-define_mapping("Cust_Prod(CustomerId,ProductId)->                                                        \
+define_mapping("Cust_Prod(CustomerId,ProductId,Asin)->                                                        \
                Customers(CustomerId,HouseholdId,Gender,FirstName),                                       \
                Orders(OrderId,CustomerId,CampaignId,OrderDate,City,State,ZipCode,PaymentType,TotalPrice, \
                         NumOrderLines,NumUnits),                                                         \
