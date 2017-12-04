@@ -1,34 +1,71 @@
 from .datasources import SqlSource, QueryResponse
 from .logger import log
-from datetime import datetime
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 
-class Products(SqlSource):
-    @log
-    def priceDistribution(self, asin=[], bins=5):
-        asin_filter = ' WHERE p.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
 
+class Products(SqlSource):
+    def _createPriceBins(self, bins):
+        bin_selects = []
         bin_ranges = []
 
-        range_response = self._execSqlQuery('''
-            SELECT
-                COALESCE(MAX(unitprice),0) as max,
-                COALESCE(MIN(unitprice),0) as min
+        if type(bins) is list:
+            bin_ranges = bins
+        elif type(bins) is int:
+
+            range_response = self._execSqlQuery('''
+                SELECT
+                    COALESCE(MAX(unitprice::Numeric),0) as max,
+                    COALESCE(MIN(unitprice::Numeric),0) as min
+                FROM products p
+                JOIN orderlines o
+                    ON p.productid = o.productid''')
+
+            price_range = [
+                int(range_response.results[0][1]),
+                int(range_response.results[0][0])
+            ]
+            range_step = int((price_range[1] - price_range[0]) / bins)
+            current_step = price_range[0]
+
+            for i in range(bins):
+                start = current_step
+                end = current_step + range_step
+                bin_ranges.append((start, end))
+
+                current_step = end
+
+        for bin in bin_ranges:
+            start = bin[0]
+            end = bin[1]
+
+            col_name = 'count_' + str(start) + '_to_' + str(end)
+
+            bin_selects.append('''
+                SUM(
+                    CASE
+                        WHEN
+                            o.unitprice::Numeric >= {}
+                            AND o.unitprice::Numeric < {}
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as {}
+                '''.format(start, end, col_name))
+
+        return ', '.join(bin_selects)
+
+    @log
+    def priceDistribution(self, bins=5):
+        bin_selects = self._createPriceBins(bins)
+
+        return self._execSqlQuery('''
+            SELECT {}
             FROM products p
             JOIN orderlines o
-                ON p.productid = o.productid'''
-            + asin_filter,{'asin_list':tuple(asin)})
-
-        range = [
-            range_response.results[0][1],
-            range_response.results[0][0]
-        ]
-
-
-
+                ON p.productid = o.productid'''.format(bin_selects))
 
     @log
     def seasonalOrderDistribution(self, asin=[]):
@@ -73,17 +110,16 @@ class Products(SqlSource):
               FROM products p
               JOIN orderlines o
                 ON p.productid = o.productid '''
-              + asin_filter + '''
+                 + asin_filter + '''
               GROUP BY p.asin, p.productid''')
 
         return self._execSqlQuery(query,
-            {
-              'asin_list': tuple(asin)
-            })
-
+                                  {
+                                      'asin_list': tuple(asin)
+                                  })
 
     @log
-    def ratingsDistribution(self, min_date='1900-1-1', max_date=None,asin=[], sample_size=100):
+    def ratingsDistribution(self, min_date='1900-1-1', max_date=None, asin=[], sample_size=100):
         """For each product, determine the how many 1, 2, 3, 4, and 5 star reviews the product received. 
 
         Args:
@@ -102,9 +138,8 @@ class Products(SqlSource):
              three_star_votes is the number of three star reveiws the book received. four_star_votes is
              the number of four star reveiws the book received. five_star_votes is the number of five
              star reveiws the book received. """
-        
-        
-        max_date_filter =  ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
+
+        max_date_filter = ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
 
         asin_filter = ' AND r.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
 
@@ -121,9 +156,9 @@ class Products(SqlSource):
                 ON p.asin = r.asin
               WHERE
                 r.ReviewTime >= %(min_date)s'''
-                + max_date_filter
-                + asin_filter
-                + '''ORDER BY r.overall
+                 + max_date_filter
+                 + asin_filter
+                 + '''ORDER BY r.overall
             )  SELECT
                 asin,
                 productid,
@@ -162,16 +197,16 @@ class Products(SqlSource):
               ORDER BY five_star_votes DESC''')
 
         return self._execSqlQuery(query,
-            {
-                'min_date':min_date,
-                'max_date':max_date,
-                'asin_list':tuple(asin),
-                'sample_size':sample_size,
-                'random_seed':self._random_seed
-            })
+                                  {
+                                      'min_date': min_date,
+                                      'max_date': max_date,
+                                      'asin_list': tuple(asin),
+                                      'sample_size': sample_size,
+                                      'random_seed': self._random_seed
+                                  })
 
     @log
-    def coPurchases(self, asin, min_date='1900-1-1', max_date=None, sample_size=100 ):
+    def coPurchases(self, asin, min_date='1900-1-1', max_date=None, sample_size=100):
         """For each given book, find all the books purchased in the same order as the given book 
         and the number of times that book was purchased.
 
@@ -187,10 +222,10 @@ class Products(SqlSource):
              in the same order as one of the input bools. numPurch is the number of times 
              the book the book was purchased.   
         """
-        
-        if len(asin) == 0: 
+
+        if len(asin) == 0:
             return None
-        
+
         max_date_filter = ' AND o.orderdate <= %(max_date)s ' if max_date else ' '
 
         query = ('''
@@ -204,7 +239,7 @@ class Products(SqlSource):
               orders o
             WHERE
               o.orderid = ol.orderid
-              AND o.orderdate >= %(min_date)s'''+max_date_filter+'''
+              AND o.orderdate >= %(min_date)s''' + max_date_filter + '''
               AND ol.orderid in (
                 SELECT orid.orderid
                 FROM (
@@ -232,15 +267,15 @@ class Products(SqlSource):
               AND p.asin not in %(asin_list)s
             GROUP BY p.asin
             ORDER BY numPurch DESC;''')
-        return self._execSqlQuery (query,
-               {
-                    'min_date':min_date,
-                    'max_date':max_date,
-                    'asin_list':tuple(asin),
-                    'sample_size':sample_size,
-                    'random_seed':self._random_seed
-               })
-        
+        return self._execSqlQuery(query,
+                                  {
+                                      'min_date': min_date,
+                                      'max_date': max_date,
+                                      'asin_list': tuple(asin),
+                                      'sample_size': sample_size,
+                                      'random_seed': self._random_seed
+                                  })
+
     @log
     def statsByProduct(self, min_date='1900-1-1', max_date=None, sample_size=100):
         """For each book the product id, asin, the number of times it was purchased, 
@@ -259,7 +294,7 @@ class Products(SqlSource):
              rating of the book based on the user reviews. category is the product category that the 
              book belongs to. days_on_sale is the number of days the book has been on sale.
         """
-        
+
         max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
         query = ('''
                   SELECT orderlines.productid,
@@ -281,30 +316,30 @@ class Products(SqlSource):
                   WHERE orderlines.numunits > 0
                   group by orderlines.productid, products.asin, products.nodeid;''')
         return self._execSqlQuery(query,
-               {
-                    'min_date':min_date,
-                    'max_date':max_date,
-                    'sample_size':sample_size,
-                    'random_seed':self._random_seed
-               })
-        
+                                  {
+                                      'min_date': min_date,
+                                      'max_date': max_date,
+                                      'sample_size': sample_size,
+                                      'random_seed': self._random_seed
+                                  })
+
     @log
     def clusterProducts(self,
-                         feature_set=None,
-                         n_clusters=8,
-                         algorithm='auto',
-                         cluster_on=[
-                             'numorders',
-                             'avgrating',
-                             'category',
-                             'days_on_sale',
-                             'spring_sales',
-                             'summer_sales',
-                             'fall_sales',
-                             'winter_sales'
-                         ],
-                         asin=None,
-                         scale=False):
+                        feature_set=None,
+                        n_clusters=8,
+                        algorithm='auto',
+                        cluster_on=[
+                            'numorders',
+                            'avgrating',
+                            'category',
+                            'days_on_sale',
+                            'spring_sales',
+                            'summer_sales',
+                            'fall_sales',
+                            'winter_sales'
+                        ],
+                        asin=None,
+                        scale=False):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
         results as the features (num_orders, avgrating, category, and days_on_sale).
 
@@ -324,60 +359,51 @@ class Products(SqlSource):
             feature_set = self.statsByProduct()
         if (not hasattr(feature_set, 'results')) | (not hasattr(feature_set, 'columns')):
             raise Exception('invalid feature set, no results or columns')
-        
-        
 
-        data=pd.DataFrame(feature_set.results, columns=feature_set.columns)
-        response=self.seasonalOrderDistribution()
-        df=pd.DataFrame(response.results,columns=response.columns)
-        data=data.merge(df, on=['productid','asin'],how='outer')
-        
-        if (data[cluster_on].isnull().values.any())==True:
-            data=data.dropna()
-        
+        data = pd.DataFrame(feature_set.results, columns=feature_set.columns)
+        response = self.seasonalOrderDistribution()
+        df = pd.DataFrame(response.results, columns=response.columns)
+        data = data.merge(df, on=['productid', 'asin'], how='outer')
+
+        if (data[cluster_on].isnull().values.any()):
+            data = data.dropna()
+
         if asin is None:
-            input_centers='k-means++'
+            input_centers = 'k-means++'
             X = (
-                    data[cluster_on].values
-                    if scale is False
-                    else StandardScaler().fit_transform(data[cluster_on].values)
-                )
+                data[cluster_on].values
+                if scale is False
+                else StandardScaler().fit_transform(data[cluster_on].values)
+            )
 
         else:
 
-            asin_s=set(asin)
-            input_centers=data[data['asin'].isin(asin)]
-            input_centers=input_centers[cluster_on].values
+            asin_s = set(asin)
+            input_centers = data[data['asin'].isin(asin)]
+            input_centers = input_centers[cluster_on].values
 
-            data=data[~data['asin'].isin(asin)]
+            data = data[~data['asin'].isin(asin)]
             X = (
-                    data[cluster_on].values
-                    if scale is False
-                    else StandardScaler().fit_transform(data[cluster_on].values)
-                )
-        
+                data[cluster_on].values
+                if scale is False
+                else StandardScaler().fit_transform(data[cluster_on].values)
+            )
+
         clustering = pd.DataFrame(X, columns=cluster_on)
-        
-        algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers)
+
+        algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=input_centers)
         algorithm.fit_predict(X)
-        
+
         for col in feature_set.columns:
             if col not in clustering.columns.values:
                 clustering.loc[:, col] = data[col]
-        
 
-        response_columns=np.append(clustering.columns.values,'cluster')
+        response_columns = np.append(clustering.columns.values, 'cluster')
         clustering.loc[:, 'cluster'] = algorithm.labels_
-        
-        
+
         response = QueryResponse(
             columns=response_columns,
             results=[tuple(x) for x in clustering.values]
         )
-        
+
         return response
-    
-    
-                                          
-        
-        
