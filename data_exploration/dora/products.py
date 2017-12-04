@@ -346,6 +346,7 @@ class Products(SqlSource):
                             'fall_sales',
                             'winter_sales'
                         ],
+                        random_state=None,
                         asin=None,
                         scale=False):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
@@ -358,6 +359,8 @@ class Products(SqlSource):
             to use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient
             by using the triangle inequality, but currently doesn’t support sparse data. “auto” chooses
             “elkan” for dense data and “full” for sparse data.
+            random_state (int): optional. int used to genderate random number.
+            asin (tuple(string)): optional. asins will be the centers of the kmeans clustering.
         
         Returns:
              tuple(productid, asin, y_pred): productid is the products unqiue identifier. asin is the
@@ -400,7 +403,8 @@ class Products(SqlSource):
 
         clustering = pd.DataFrame(X, columns=cluster_on)
 
-        algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=input_centers)
+        algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers, 
+                         random_state=random_state)
         algorithm.fit_predict(X)
 
         for col in data.columns:

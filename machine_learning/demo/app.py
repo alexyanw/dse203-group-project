@@ -12,8 +12,11 @@ app = Flask(__name__)
 # What mapping represent general category
 NUM_GENERAL_CATEGORY = 0
 
-# Number of recommendaions to provide
+# Number of recommendaions to provide in testrec page
 NUM_RECOMMENDATIONS = 10
+
+# Number of recommendaions to randomize from in content filtering
+NUM_RECOMMENDATIONS_C = 40
 
 # Ratio that identifies popularity for seasons
 RATIO_POPULAR_SEASON = 0.4
@@ -47,7 +50,7 @@ matrix_ccm_g = np.load('ccm_general.npy')
 matrix_season_price_instock = np.load('season_price_instock_indexed.npy')
 
 # load in content rating array
-matrix_content = np.load('asin_rating.npy')
+matrix_content = np.load('rating_indexed.npy')
 
 # load in customer ids
 list_cust_ids = list(np.load('custids.npy'))
@@ -290,7 +293,6 @@ def get_contentrec():
 	arg_cat_list = list(map(int, request.args.getlist('list_categories')))
 	arg_purchase_list = request.args.getlist('list_purchases')
 	arg_num_rec = int(request.args.get('num_rec'))
-	arg_num_rec = int(request.args.get('num_rec'))
 	arg_season_list = request.args.getlist('list_seasons')
 	arg_price = int(request.args.get('max_price',0))
 
@@ -324,7 +326,9 @@ def get_contentrec():
 
 	# Select top indexes
 	indices = np.nonzero(rowsum)[0]
-	toprec = indices[np.argsort(rowsum[indices])][-1 * arg_num_rec:][::-1]
+	randrec = indices[np.argsort(rowsum[indices])][-1 * NUM_RECOMMENDATIONS_C:][::-1]
+	randindices = np.random.permutation(randrec)[:arg_num_rec]
+	toprec = randindices[np.argsort(rowsum[randindices])][::-1]
 
 	list_json = []
 	for tr in toprec:
