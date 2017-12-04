@@ -3,6 +3,7 @@ import re
 import difflib
 import sys
 import pickle
+import random
 
 #Dictionary for global schema mappings
 gsm={}
@@ -24,10 +25,18 @@ class view:
         if len(self.mapped_to)>0:
             child_index=0
             for each_child in self.mapped_to:
+                #From the needed_cols and this object's col_map , trying to propogate
+                #the needed cols to child_needed_cols
                 child_needed_cols = ['_']*len(each_child.cols)
                 for e_t in self.col_map:
                     if needed_cols[e_t[0]]!='' and e_t[1]==child_index:
                         child_needed_cols[e_t[2]]=needed_cols[e_t[0]]
+                #child_needed_cols should be checked if it has the necessary join columns enumerated
+                if child_index in self.join_col_dict:
+                    for e_d in self.join_col_dict[child_index]:
+                        for c_col_idx in range(len(child_needed_cols)):
+                            if child_needed_cols[c_col_idx]=='_' and (c_col_idx ==e_d):
+                                child_needed_cols[c_col_idx]=self.join_col_dict[child_index][c_col_idx]
                 x = x+each_child.unwrap(child_needed_cols)
                 child_index+=1
             return x[:]
@@ -69,14 +78,25 @@ def get_cols(q):
     col_text = q[q.find("(")+1:q.find(")")]
     return col_text.split(',')
 
+random_name_list=[]
+def get_a_name():
+    xy=0
+    while (xy<10):
+        ret = ''.join([random.choice('wxyz') for x in range(4)])
+        if ret not in random_name_list:
+            random_name_list.append(ret)
+            return ret
+        xy+=1
+
 def schema_searcher(name):
     ret ={}
     schema_defs= open('source_descriptions.txt','r').read()
+    schema_defs = schema_defs.lower()
 #    fp=schema_defs.find("CREATE TABLE "+name)
     #  CREATE\s*TABLE\s*Customers\s*\((.*)\)\s;
     #  'CREATE\s*TABLE\s*Customers\s*\((.*)\)\s*?;'
     def_string = 'CREATE\s*TABLE\s*%s\s*\((.*?)\)\s*?;'%name
-    match = re.search(def_string,schema_defs,re.DOTALL)
+    match = re.search(def_string,schema_defs,re.DOTALL|re.IGNORECASE)
     if match:
         col_text=match.group(1)
         col_list = col_text.split(',')
@@ -126,10 +146,38 @@ def schema_matcher(head_cols,body_cols):
     #print col_map
     return col_map
 
+def join_cols_matcher(body_col_list):
+
+    join_dict=dict()
+    for i in range(len(body_col_list)):
+        cur_col_list = body_col_list[i]
+        j=i+1
+        remaining_col_list =  body_col_list[j:]
+        for col_idx in range(len(cur_col_list)):
+            col = cur_col_list[col_idx]
+            for k in range(len(remaining_col_list)):
+                sim_ratios = [ difflib.SequenceMatcher(None,col,x).ratio() for x in remaining_col_list[k]]
+                if max(sim_ratios)>0.9:
+                    if i not in join_dict:
+                        join_dict[i]=dict()
+                    if col_idx not in join_dict[i]:
+                        nm = get_a_name()
+                        join_dict[i][col_idx]=nm
+                    else:
+                        nm=join_dict[i][col_idx]
+
+                    if (j+k) not in join_dict:
+                        join_dict[(j+k)] = dict()
+                    idx = sim_ratios.index(max(sim_ratios))
+                    if idx not in join_dict[(j+k)]:
+                        join_dict[(j+k)][idx] = nm
+
+    return join_dict
 
 def define_mapping(map_str):
     #remove all white spaces
     map_str = map_str.replace(' ','')
+    map_str = map_str.lower()
     #check for head
     [head,body]       = map_str.split('->')
     head_view  = head.split('(')[0]
@@ -165,6 +213,7 @@ def define_mapping(map_str):
 
     #Schema Matching
     gsm[head_view].col_map = schema_matcher(head_cols,body_cols_list)
+    gsm[head_view].join_col_dict = join_cols_matcher(body_cols_list)
 
 
     #print gsm[head_view].mapped_to
@@ -174,21 +223,21 @@ def define_mapping(map_str):
 
 
 
-define_mapping("Cust_Prod(CustomerId,ProductId)->                                                        \
-               Customers(CustomerId,HouseholdId,Gender,FirstName),                                       \
-               Orders(OrderId,CustomerId,CampaignId,OrderDate,City,State,ZipCode,PaymentType,TotalPrice, \
+define_mapping("Cust_Prod(CustomerId,ProductId,Asin)->                                                        \
+               postgres.Customers(CustomerId,HouseholdId,Gender,FirstName),                                       \
+               postgres.Orders(OrderId,CustomerId,CampaignId,OrderDate,City,State,ZipCode,PaymentType,TotalPrice, \
                         NumOrderLines,NumUnits),                                                         \
-               OrderLines(OrderLineId,OrderId,ProductId,ShipDate,BillDate,UnitPrice,NumUnits,TotalPrice),\
-               Products(ProductId,Name,GroupCode,GroupName,IsInStock,FullPrice,Asin)")
+               postgres.OrderLines(OrderLineId,OrderId,ProductId,ShipDate,BillDate,UnitPrice,NumUnits,TotalPrice),\
+               postgres.Products(ProductId,Name,GroupCode,GroupName,IsInStock,FullPrice,Asin)")
 
 
 define_mapping("Global_Seasonal_View(ProductId,spring,summer,fall,winter,FullPrice,IsInStock)->          \
-               Products(IsInStock,FullPrice),                                                            \
-               seasonal_percentages(ProductId,spring,summer,fall,winter)")
+               postgres.Products(IsInStock,FullPrice),                                                            \
+               postgres.seasonal_percentages(ProductId,spring,summer,fall,winter)")
 
 
 define_mapping("Global_Seasonal_View_cust(ProductId,spring,summer,fall,winter,FullPrice,IsInStock)->      \
                Global_Seasonal_View(IsInStock,FullPrice),                                                 \
-               Customers()")
+               postgres.Customers()")
 
 pickle.dump( gsm, open( "global_schema_mappings.pkl", "w" ) )

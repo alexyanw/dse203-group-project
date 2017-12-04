@@ -7,7 +7,7 @@
  *  - Run this script from inside Postgres
  */
 
-CREATE TABLE Calendar (
+CREATE TABLE postgres.Calendar (
 	Date date NOT NULL,
 	ISO varchar(10) NOT NULL,
 	datenum int NOT NULL,
@@ -36,51 +36,55 @@ CREATE TABLE Calendar (
 	hol_Chinese varchar(255) NULL,
 	hol_Other varchar(255) NULL
 ) ;
+--postgres;
 
 COPY Calendar FROM '$load_dir$Calendar.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' CSV;
 
-CREATE TABLE Campaigns (
+CREATE TABLE postgres.Campaigns (
 	CampaignId int NOT NULL PRIMARY KEY,
 	CampaignName varchar(50) NOT NULL,
 	Channel varchar(50) NOT NULL,
 	Discount int NOT NULL,
 	FreeShppingFlag char(1) NOT NULL
 ) ;
+--postgres;
 
 
 COPY Campaigns FROM '$load_dir$Campaigns.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' CSV;
 
 
-CREATE TABLE Customers (
+CREATE TABLE postgres.Customers (
 	CustomerId int NOT NULL PRIMARY KEY,
 	HouseholdId int NOT NULL,
 	Gender varchar(50) NOT NULL,
 	FirstName varchar(50) NOT NULL
 ) ;
+--postgres;
 
 COPY Customers FROM '$load_dir$Customers.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' CSV;
 
 
-CREATE TABLE OrderLines (
+CREATE TABLE postgres.OrderLines (
 	OrderLineId int NOT NULL PRIMARY KEY,
 	OrderId int NOT NULL,
 	ProductId int NULL,
 	ShipDate date NOT NULL,
 	BillDate date NOT NULL,
 	UnitPrice money NOT NULL,
-	NumUnits int NOT NULL,
-	TotalPrice money NOT NULL
+	ol_NumUnits int NOT NULL,
+	ol_TotalPrice money NOT NULL
 ) ;
+--postgres;
 
 
 COPY OrderLines FROM '$load_dir$OrderLines.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' CSV;
 
 
-CREATE TABLE Orders (
+CREATE TABLE postgres.Orders (
 	OrderId int NOT NULL PRIMARY KEY,
 	CustomerId int NOT NULL,
 	CampaignId int NOT NULL,
@@ -93,21 +97,24 @@ CREATE TABLE Orders (
 	NumOrderLines int NOT NULL,
 	NumUnits int NOT NULL
 ) ;
+--postgres;
 
 
 COPY Orders FROM '$load_dir$Orders.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' ENCODING 'LATIN1'  CSV;
 
 
-CREATE TABLE Products (
+CREATE TABLE postgres.Products (
 	ProductId int NOT NULL PRIMARY KEY,
 	Name varchar(50) NOT NULL,
 	GroupCode varchar(50) NOT NULL,
 	GroupName varchar(50) NOT NULL,
 	IsInStock char(1) NOT NULL,
 	FullPrice money NOT NULL,
-    Asin char(10) NOT NULL
+    Asin char(10) NOT NULL,
+    nodeid char(10) NOT NULL
 ) ;
+--postgres;
 
 
 
@@ -115,7 +122,7 @@ COPY Products FROM '$load_dir$Products.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' CSV;
 
 
-CREATE TABLE  Subscribers (
+CREATE TABLE  postgres.Subscribers (
   SubscriberId int NOT NULL primary key,
   RatePlan varchar(6) NOT NULL,
   MonthlyFee float NOT NULL,
@@ -127,12 +134,13 @@ CREATE TABLE  Subscribers (
   Tenure int default NULL,
   IsActive int default NULL
 );
+--postgres;
 
 COPY Subscribers FROM '$load_dir$Subscribers.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' CSV;
 
 
-create table ZipCensus (
+create table postgres.ZipCensus (
     state varchar(255),
     zcta5 varchar(255),
     ZIPName varchar(255),
@@ -800,6 +808,7 @@ create table ZipCensus (
     CashRenterOver750 int,
     pctCashRenterOver750 decimal(5, 4)
 );
+--postgres;
 
 
 
@@ -807,7 +816,7 @@ COPY ZipCensus FROM '$load_dir$ZipCensus.txt'
     WITH HEADER NULL '\N' DELIMITER '	' CSV;
 
 
-CREATE TABLE ZipCounty (
+CREATE TABLE postgres.ZipCounty (
     ZipCode char(5) NULL,
     Latitude real NULL,
     Longitude real NULL,
@@ -821,12 +830,13 @@ CREATE TABLE ZipCounty (
     CountyLandAreaMiles real NULL,
     CountyWaterAreaMiles real NULL
 );
+--postgres;
 
 COPY ZipCounty FROM '$load_dir$ZipCounty.txt'
     WITH HEADER NULL 'NULL' DELIMITER '	' ENCODING 'LATIN1'  CSV;
 
 
-CREATE TABLE Reviews (
+CREATE TABLE postgres.Reviews (
     ReviewId varchar(25) NOT NULL,
     Asin char(10) NOT NULL,
     ReviewerName varchar(50) NOT NULL,
@@ -837,6 +847,7 @@ CREATE TABLE Reviews (
     ReviewTime timestamp NOT NULL,
     Summary varchar(1024) NOT NULL
 );
+--postgres;
 
 COPY Reviews FROM '$load_dir$Reviews.txt'
     WITH HEADER NULL 'NULL' DELIMITER E'\t' ENCODING 'LATIN1'  CSV;
@@ -854,11 +865,13 @@ FROM (SELECT productid, EXTRACT(MONTH FROM orderdate) as month, case when l.numu
       WHERE o.orderid = l.orderid AND c.customerid = o.customerid) as temp
 GROUP BY productid
 );
+--postgres;
 
-CREATE TABLE seasonal_percentages (
+CREATE TABLE postgres.seasonal_percentages (
     productid varchar(25) NOT NULL,
     spring int NOT NULL,
     summer int NOT NULL,
     fall int NOT NULL,
     winter int NOT NULL
 );
+--postgres;
