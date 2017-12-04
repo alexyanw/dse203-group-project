@@ -1,10 +1,13 @@
 import pickle
-from ViewDefinitions import view
+
 import re
 import sys
+sys.path.append("..\\query_capability\\")
 
+from ViewDefinitions import view
+from hybrid_engine import HybridEngine
 
-gsm = pickle.load(open('global_schema_mappings.pkl','r'))
+gsm = pickle.load(open('global_schema_mappings.pkl','rb'))
 
 #for key in gsm:
 #    print gsm[key].get_name()
@@ -47,12 +50,21 @@ def execute(query,condition=None,limit=None,debug=False,just_debug=False):
     if debug==True:
         print_qpe_dict_list(qpe_dict_list)
 
+    engine = HybridEngine(
+        postgres={'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres',
+                  'password': 'pavan007'},
+        asterix={'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
+        solr={'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
+    qpe_dict_list=[qpe_dl]
+    print(qpe_dl['table'])
 
+    return(engine.queryDatalog(qpe_dict_list))
+
+    #return qpe_dl
 
     #return(engine.queryDatalog(qpe_dict))
-    return qpe_dl
 
-
+    #return qpe_dl
 
     #qpe_dl['condition'] =
 

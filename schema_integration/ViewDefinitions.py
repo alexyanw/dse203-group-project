@@ -4,6 +4,10 @@ import difflib
 import sys
 import pickle
 import random
+import sys
+sys.path.append("..\\query_capability\\")
+
+from hybrid_engine import HybridEngine
 
 #Dictionary for global schema mappings
 gsm={}
@@ -222,13 +226,193 @@ def define_mapping(map_str):
 
 
 
+engine = HybridEngine(
+        postgres={'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres',
+                  'password': 'pavan007'},
+        asterix={'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
+        solr={'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
 
-define_mapping("Cust_Prod(CustomerId,ProductId,Asin)->                                                        \
-               postgres.Customers(CustomerId,HouseholdId,Gender,FirstName),                                       \
-               postgres.Orders(OrderId,CustomerId,CampaignId,OrderDate,City,State,ZipCode,PaymentType,TotalPrice, \
-                        NumOrderLines,NumUnits),                                                         \
-               postgres.OrderLines(OrderLineId,OrderId,ProductId,ShipDate,BillDate,UnitPrice,NumUnits,TotalPrice),\
-               postgres.Products(ProductId,Name,GroupCode,GroupName,IsInStock,FullPrice,Asin)")
+def define_virtual_view_in_source(query):
+    engine.execute(query)
+
+
+define_virtual_view_in_source("CREATE OR REPLACE VIEW reviewcount as \
+(                                                                    \
+   SELECT reviewid, count(*) as reviewercount                        \
+   FROM reviews                                                      \
+   GROUP BY reviewid);")
+
+define_virtual_view_in_source("CREATE OR REPLACE VIEW bookcount as       \
+(                                           \
+   SELECT asin, count(*) as bookreviewcount \
+   FROM reviews                             \
+   GROUP BY asin                            );")
+
+define_virtual_view_in_source("CREATE OR REPLACE VIEW reviewvotesage as                                                   \
+(                                                                                          \
+   SELECT reviewid,                                                                        \
+          asin,                                                                            \
+          cast(overall AS int) AS rating,                                                  \
+          cast(trim(LEADING '[' FROM substring(helpful FROM 0 FOR position(',' IN          \
+            helpful))) AS INT) AS votesforreview,                                          \
+          cast(trim(TRAILING ']' FROM substring(helpful FROM position(',' IN               \
+            helpful)+2)) AS INT) AS outof,                                                 \
+          extract(day FROM CURRENT_DATE - reviewtime) as age,                              \
+          reviewtext,                                                                      \
+          summary                                                                          \
+   FROM reviews r                                                                          \
+);")
+
+define_virtual_view_in_source("CREATE OR REPLACE VIEW seasonal_percentages as                                                                      \
+(                                                                                                                   \
+   SELECT productid,                                                                                                \
+          round(100*sum(case when month >= 3 and month < 6 then numunits else 0                                     \
+            end)/sum(numunits),2) as spring,                                                                        \
+          round(100*sum(case when month >= 6 and month < 9 then numunits else 0                                     \
+            end)/sum(numunits),2) as summer,                                                                        \
+          round(100*sum(case when month >= 9 and month < 12 then numunits else 0                                    \
+            end)/sum(numunits),2) as fall,                                                                          \
+          round(100*sum(case when (month = 12 or month < 3) then numunits else 0                                    \
+            end)/sum(numunits),2) as winter                                                                         \
+   FROM (                                                                                                           \
+           SELECT productid, EXTRACT(MONTH FROM orderdate) as month, case when                                      \
+                  l.numunits = 0 then 0.00001 else l.numunits end as numunits                                       \
+           FROM orders o, orderlines l, customers c                                                                 \
+           WHERE o.orderid = l.orderid AND c.customerid = o.customerid                                              \
+         ) as temp                                                                                                  \
+   GROUP BY productid                                                                                               \
+);")
+
+define_virtual_view_in_source("CREATE OR REPLACE VIEW p_instock_fp_d as                                  \
+(                                                                         \
+   SELECT productid, Cast(Max(p.fullprice) AS DECIMAL) as fullprice_d,    \
+          CASE                                                            \
+            WHEN Max(p.isinstock) = 'Y' THEN 1                            \
+            ELSE 0                                                        \
+          END as isinstock_d, asin                                        \
+   FROM products p                                                        \
+   GROUP BY p.productid                                                   \
+);                                                                        ")
+
+define_virtual_view_in_source("CREATE OR REPLACE VIEW regions_map as                                            \
+(                                                                                \
+   SELECT c.customerid,                                                          \
+       case when o.state='.' then 0                                              \
+            when o.state='' then 0                                               \
+            when o.state='RI' then 1                                             \
+            when o.state='NH' then 1                                             \
+            when o.state='VT' then 1                                             \
+            when o.state='CT' then 1                                             \
+            when o.state='SP' then 1                                             \
+            when o.state='MA' then 1                                             \
+            when o.state='ME' then 1                                             \
+            when o.state='PA' then 2                                             \
+            when o.state='NJ' then 2                                             \
+            when o.state='NY' then 2                                             \
+            when o.state='OH' then 3                                             \
+            when o.state='WI' then 3                                             \
+            when o.state='IN' then 3                                             \
+            when o.state='IL' then 3                                             \
+            when o.state='MI' then 3                                             \
+            when o.state='SD' then 4                                             \
+            when o.state='IA' then 4                                             \
+            when o.state='KS' then 4                                             \
+            when o.state='MO' then 4                                             \
+            when o.state='ND' then 4                                             \
+            when o.state='MN' then 4                                             \
+            when o.state='NE' then 4                                             \
+            when o.state='NC' then 5                                             \
+            when o.state='VA' then 5                                             \
+            when o.state='SC' then 5                                             \
+            when o.state='DC' then 5                                             \
+            when o.state='GA' then 5                                             \
+            when o.state='DE' then 5                                             \
+            when o.state='WV' then 5                                             \
+            when o.state='MD' then 5                                             \
+            when o.state='FL' then 5                                             \
+            when o.state='MS' then 6                                             \
+            when o.state='TN' then 6                                             \
+            when o.state='KY' then 6                                             \
+            when o.state='AL' then 6                                             \
+            when o.state='OK' then 7                                             \
+            when o.state='LA' then 7                                             \
+            when o.state='TX' then 7                                             \
+            when o.state='AR' then 7                                             \
+            when o.state='WY' then 8                                             \
+            when o.state='UT' then 8                                             \
+            when o.state='AZ' then 8                                             \
+            when o.state='NM' then 8                                             \
+            when o.state='ID' then 8                                             \
+            when o.state='NV' then 8                                             \
+            when o.state='CO' then 8                                             \
+            when o.state='MT' then 8                                             \
+            when o.state='CA' then 9                                             \
+            when o.state='WA' then 9                                             \
+            when o.state='AK' then 9                                             \
+            when o.state='OR' then 9                                             \
+            when o.state='GU' then 9                                             \
+            when o.state='HI' then 9                                             \
+            when o.state='PR' then 10                                            \
+            when o.state='US' then 10                                            \
+            when o.state='VI' then 10                                            \
+            when o.state='AA' then 11                                            \
+            when o.state='AE' then 12                                            \
+            when o.state='AP' then 13                                            \
+            when o.state='AB' then 14                                            \
+            when o.state='BC' then 15                                            \
+            when o.state='MB' then 16                                            \
+            when o.state='NB' then 17                                            \
+            when o.state='NL' then 18                                            \
+            when o.state='NF' then 18                                            \
+            when o.state='NT' then 19                                            \
+            when o.state='NS' then 20                                            \
+            when o.state='ON' then 21                                            \
+            when o.state='PE' then 22                                            \
+            when o.state='PQ' then 23                                            \
+            when o.state='QC' then 23                                            \
+            when o.state='SK' then 24                                            \
+            when o.state='UK' then 25                                            \
+            when o.state='EN' then 26                                            \
+            when o.state='QL' then 27                                            \
+            when o.state='CN' then 28                                            \
+            when o.state='CH' then 28                                            \
+            when o.state='DF' then 29                                            \
+            when o.state='FR' then 30                                            \
+            when o.state='GD' then 31                                            \
+            when o.state='BD' then 32                                            \
+            when o.state='KM' then 33                                            \
+            when o.state='KW' then 34                                            \
+            when o.state='LC' then 35                                            \
+            when o.state='MG' then 36                                            \
+            when o.state='PC' then 37                                            \
+            when o.state='SO' then 38                                            \
+            when o.state='SR' then 39                                            \
+            when o.state='VC' then 40                                            \
+            when o.state='YU' then 41                                            \
+            else 0                                                               \
+       end as region,                                                            \
+       case when c.gender='M' then 1                                             \
+            when c.gender='F' then 2                                             \
+            else 0                                                               \
+       end as gender                                                             \
+   FROM customers c, orders o                                                    \
+   WHERE c.customerid = o.customerid                                             \
+   order by c.customerid                                                         \
+);                                                                               ")
+
+
+# define_mapping("Cust_Prod(CustomerId,ProductId,Asin)->                                                        \
+#                postgres.Customers(CustomerId,HouseholdId,Gender,FirstName),                                       \
+#                postgres.Orders(OrderId,CustomerId,CampaignId,OrderDate,City,State,ZipCode,PaymentType,TotalPrice, \
+#                         NumOrderLines,NumUnits),                                                         \
+#                postgres.OrderLines(OrderLineId,OrderId,ProductId,ShipDate,BillDate,UnitPrice,NumUnits,TotalPrice),\
+#                postgres.Products(ProductId,Name,GroupCode,GroupName,IsInStock,FullPrice,Asin)")
+
+define_mapping("Cust_Prod(customerid, householdid, gender, firstname, orderid, campaignid, orderdate, city, state, zipcode, paymenttype, order_totalprice, numorderlines, order_numunits, orderlineid, productid, shipdate, billdate, unitprice, ol_numunits, ol_totalprice, isinstock, fullprice, asin, nodeid) ->                                                        \
+               postgres.Customers(),                                       \
+               postgres.Orders(),                                                         \
+               postgres.OrderLines(),\
+               postgres.Products()")
 
 
 define_mapping("Global_Seasonal_View(ProductId,spring,summer,fall,winter,FullPrice,IsInStock)->          \
@@ -240,4 +424,10 @@ define_mapping("Global_Seasonal_View_cust(ProductId,spring,summer,fall,winter,Fu
                Global_Seasonal_View(IsInStock,FullPrice),                                                 \
                postgres.Customers()")
 
-pickle.dump( gsm, open( "global_schema_mappings.pkl", "w" ) )
+define_mapping("reviewFeatures_view(reviewid, asin, rating, votesforreview, outof, reviewercount, \
+                bookreviewcount, age, nodeid, reviewtext, summary) -> postgres.reviewvotesage(), postgres.reviewcount(),\
+                postgres.bookcount(), postgres.products()")
+
+define_mapping("regions_map_view(customerid, region, gender) -> postgres.regions_map()")
+
+pickle.dump( gsm, open( "global_schema_mappings.pkl", "wb" ) )

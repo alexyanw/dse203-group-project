@@ -95,7 +95,7 @@ CREATE TABLE postgres.Orders (
 	PaymentType varchar(50) NOT NULL,
 	TotalPrice money NOT NULL,
 	NumOrderLines int NOT NULL,
-	NumUnits int NOT NULL
+	order_numUnits int NOT NULL
 ) ;
 --postgres;
 
@@ -874,4 +874,39 @@ CREATE TABLE postgres.seasonal_percentages (
     fall int NOT NULL,
     winter int NOT NULL
 );
+
+CREATE TABLE postgres.reviewcount (
+   reviewid,
+   reviewercount
+);
+
+CREATE TABLE postgres.bookcount(
+   asin,
+   bookreviewcount
+);
+
+CREATE TABLE postgres.reviewvotesage (
+    reviewid,
+    asin,
+          rating,
+          votesforreview,
+          outof,
+          age,
+          reviewtext,
+          summary
+);
+
+CREATE TABLE postgres.p_instock_fp_d (
+   productid,
+   fullprice_d,
+   isinstock_d,
+   asin
+);
+
+CREATE TABLE postgres.regions_map (
+   customerid,
+   region,
+   gender
+);
+
 --postgres;
