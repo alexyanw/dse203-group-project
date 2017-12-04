@@ -14,6 +14,19 @@ class QueryResponse(object):
         self.results = results
         self.is_cached = False
 
+    def __str__(self):
+        return str({
+            'columns':self.columns,
+            'results':self.results,
+            'is_cached':self.is_cached
+        })
+
+    def to_csv(self, path):
+        pass
+
+    def to_pandas(self,path):
+        pass
+
 class Cacheable(object):
     def __init__(self, ttl):
         self._dir = '.cache'
