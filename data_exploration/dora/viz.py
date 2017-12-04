@@ -1,5 +1,33 @@
 import matplotlib.pyplot as plt
-from .api import DataExplorer
+
+class QueryViz:
+    def __init__(self, columns, results):
+        self.columns = columns
+        self.results = results
+
+    def bar(self, title=None, cols=None):
+        cols = (cols
+                if (type(cols) is list) | (type(cols) is tuple)
+                else self.columns)
+
+        data_x = [
+            tuple([row[self.columns.index(key)]
+                   for key in cols
+                   ]) for row in self.results
+            ]
+        data_y = cols
+
+        for row in data_x:
+            plt.bar(range(len(cols)), row)
+
+        # set the locations of the xticks
+
+        # set the locations and labels of the xticks
+        plt.xticks(range(len(cols)), cols, rotation=70)
+        plt.xlabel('count')
+        plt.title(title)
+        plt.show()
+
 
 class VizExplorer:
     def _data_from_response(self, response, x, y, z):
@@ -41,11 +69,3 @@ class VizExplorer:
 
         plt.show()
         return
-
-
-if __name__ == '__main__':
-    explorer = DataExplorer()
-    viz = VizExplorer()
-
-    stats = explorer.orders.statsByProduct(order_by='numunits_sum')
-    viz.bar(stats, 'days_on_sale','numunits_sum')
