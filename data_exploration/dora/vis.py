@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-class QueryViz:
+class QueryVis:
     def __init__(self, columns, results):
         self.columns = columns
         self.results = results
@@ -29,7 +29,7 @@ class QueryViz:
         plt.show()
 
 
-class VizExplorer:
+class VisExplorer:
     def _data_from_response(self, response, x, y, z):
         x_index = response.columns.index(x)
         y_index = response.columns.index(y)
