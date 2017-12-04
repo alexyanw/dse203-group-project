@@ -277,7 +277,7 @@ class Products(SqlSource):
                                   })
 
     @log
-    def statsByProduct(self, min_date='1900-1-1', max_date=None, sample_size=100):
+    def statsByProduct(self,asin=[], min_date='1900-1-1', max_date=None, sample_size=100):
         """For each book the product id, asin, the number of times it was purchased, 
         the average star rating, the product category, and days the product has been on sale 
         is returned.
@@ -296,6 +296,10 @@ class Products(SqlSource):
         """
 
         max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
+        asin_filter = (' AND products.asin in %(asin_list)s '
+                            if (asin is not None) & (len(asin) > 0)
+                            else ' ')
+        
         query = ('''
                   SELECT orderlines.productid,
                       products.asin,
@@ -313,15 +317,18 @@ class Products(SqlSource):
                         ON products.asin=r.asin
                       JOIN calendar
                         ON o.orderdate=calendar.date
-                  WHERE orderlines.numunits > 0
+                  WHERE orderlines.numunits > 0 '''
+                        + asin_filter
+                        + '''
                   group by orderlines.productid, products.asin, products.nodeid;''')
         return self._execSqlQuery(query,
-                                  {
-                                      'min_date': min_date,
-                                      'max_date': max_date,
-                                      'sample_size': sample_size,
-                                      'random_seed': self._random_seed
-                                  })
+               {
+                    'min_date':min_date,
+                    'max_date':max_date,
+                    'asin_list':tuple(asin),
+                    'sample_size':sample_size,
+                    'random_seed':self._random_seed
+               })
 
     @log
     def clusterProducts(self,
@@ -360,10 +367,11 @@ class Products(SqlSource):
         if (not hasattr(feature_set, 'results')) | (not hasattr(feature_set, 'columns')):
             raise Exception('invalid feature set, no results or columns')
 
-        data = pd.DataFrame(feature_set.results, columns=feature_set.columns)
-        response = self.seasonalOrderDistribution()
-        df = pd.DataFrame(response.results, columns=response.columns)
-        data = data.merge(df, on=['productid', 'asin'], how='outer')
+        data=pd.DataFrame(feature_set.results, columns=feature_set.columns)
+        data_asin=data['asin'].values
+        response=self.seasonalOrderDistribution(asin=data_asin)
+        df=pd.DataFrame(response.results,columns=response.columns)
+        data=data.merge(df, on=['productid','asin'],how='outer')
 
         if (data[cluster_on].isnull().values.any()):
             data = data.dropna()
@@ -394,7 +402,7 @@ class Products(SqlSource):
         algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=input_centers)
         algorithm.fit_predict(X)
 
-        for col in feature_set.columns:
+        for col in data.columns:
             if col not in clustering.columns.values:
                 clustering.loc[:, col] = data[col]
 
