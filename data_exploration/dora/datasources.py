@@ -8,11 +8,11 @@ import pandas as pd
 from hashlib import sha1
 from urllib import parse, request
 from json import loads
-from .vis import QueryViz
+from .vis import QueryVis
 
 class QueryResponse(object):
     def __init__(self, columns, results):
-        self.viz = QueryViz(columns, results)
+        self.vis = QueryVis(columns, results)
         self.columns = columns
         self.results = results
         self.is_cached = False
