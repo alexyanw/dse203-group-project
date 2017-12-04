@@ -60,12 +60,13 @@ class Products(SqlSource):
     @log
     def priceDistribution(self, bins=5):
         bin_selects = self._createPriceBins(bins)
-
-        return self._execSqlQuery('''
+        query = '''
             SELECT {}
             FROM products p
             JOIN orderlines o
-                ON p.productid = o.productid'''.format(bin_selects))
+                ON p.productid = o.productid'''.format(bin_selects)
+
+        return self._execSqlQuery(query)
 
     @log
     def seasonalOrderDistribution(self, asin=[]):
