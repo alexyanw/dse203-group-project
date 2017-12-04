@@ -8,7 +8,7 @@
 * dict_dir.npy - categories directory structure
 * asin.npy - asin lookup
 * season_price_instock_indexed.npy - asin x (season, price, instock) matrix
-# asin_rating.npy - content recommendations
+# rating_indexed.npy - content recommendations
 * custids.npy - customer lookup
 
 2. Make sure flask is installed
