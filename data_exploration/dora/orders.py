@@ -1,11 +1,28 @@
 from .datasources import SqlSource
+from .logger import log
+from datetime import datetime
 
 class Orders(SqlSource):
 
+    @log
     def statsByZipcode(self, min_date='1900-1-1', max_date=None, sample_size=100):
+        """For each zipcode, determine the number of orders and the total amount of money has been spent. 
+
+        Args:
+            min_date (string): optional. date. Limits the search result timeframe.
+            max_date (string): optional. date. Limits the timeframe for which 
+            customers results will be returned
+            sample_size (int): optional. Percentage of the data the query will run over.
+        
+        Returns:
+             tuple(countyname, countypop, 'NumofOrders', 'TotalSpending'): countyname is the name of the
+             county the zipcode corresonds to. countypop is the population of the county. NumofOrders is
+             the number of orders that have been purchased by customers in the zipcode. TotalSpending is
+             the amount of money customers in the zipcode have purchased."""
+        
         max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
 
-        return self._execSqlQuery('''
+        query=('''
             SELECT
                 z.countyname,
                 z.countypop,
@@ -21,7 +38,9 @@ class Orders(SqlSource):
                 + max_date_filter + '''
             GROUP BY
                 z.countyname,
-                z.countypop''',
+                z.countypop''')
+        
+        return self._execSqlQuery(query, 
             {
                'sample_size':sample_size,
                 'random_seed':self._random_seed,
@@ -29,10 +48,31 @@ class Orders(SqlSource):
                 'max_date':max_date
             })
 
-    def statsByProduct(self, min_date='1900-1-1', max_date=None, sample_size=100, order_by='num_orders'):
+    def statsByProduct(self, min_date='1900-1-1', max_date=None, sample_size=100):
+        """Produces statistics for each product.  
+
+        Args:
+            min_date (string): optional. date. Limits the search result timeframe.
+            max_date (string): optional. date. Limits the timeframe for which 
+            customers results will be returned
+            sample_size (int): optional. Percentage of the data the query will run over.
+        
+        Returns:
+             tuple(productid, asin, num_orders, first_order, last_order, days_on_sale, unitprice_min,
+             unitprice_max, uniteprice_avg, numunits_min, numunits_max, numunits_avg, numunites_sum,
+             totalprice_min, totalprice_max, totalprice_avg, totalprice_sum): productid is the unique
+             identifier for the product. asin is the asin for the product. first_order is the date of the
+             first product being shipped. last_order is the last day an order was shipped. days_on_sale
+             is the total number of days the product was on sale. unitprice_min is the minimum price the
+             product. unitprice_max is the maximum price for the product. unitprice_avg is the average
+             price for the product. numunits_min is the minimum number of times the book was purchased in
+             one order. numunits_max is the largest number of times the book was purchased in one order.
+             numunits_avg is the average number of times the book was purchased in the same order.
+             numunits_sum is the number of times the book was purchased."""
+
         max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
 
-        return self._execSqlQuery('''
+        query=('''
             SELECT
                 orderlines.productid,
                 products.asin,
@@ -62,8 +102,9 @@ class Orders(SqlSource):
                  AND o.orderdate >= %(min_date)s'''
                 + max_date_filter + '''
             GROUP BY orderlines.productid, products.asin
-            ORDER BY {} DESC'''.format(order_by),
-            {
+            ORDER BY count(*) DESC''')
+        return self._execSqlQuery(query,
+              {                        
               'sample_size': sample_size,
               'random_seed': self._random_seed,
               'min_date': min_date,

@@ -4,15 +4,32 @@ import pysolr
 import os
 import pickle
 import datetime
+import pandas as pd
 from hashlib import sha1
 from urllib import parse, request
 from json import loads
+from .vis import QueryVis
 
 class QueryResponse(object):
     def __init__(self, columns, results):
+        self.vis = QueryVis(columns, results)
         self.columns = columns
         self.results = results
         self.is_cached = False
+
+
+    def __str__(self):
+        return str({
+            'columns':self.columns,
+            'results':self.results,
+            'is_cached':self.is_cached
+        })
+
+    def to_csv(self, path):
+        return self.to_pandas().to_csv(path)
+
+    def to_pandas(self):
+        return pd.DataFrame(data=self.results, columns=self.columns)
 
 class Cacheable(object):
     def __init__(self, ttl):

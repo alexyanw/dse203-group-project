@@ -2,6 +2,7 @@ from flask import Flask, flash, redirect, render_template, request, session, abo
 import requests
 import json
 import numpy as np
+from datetime import datetime
 app = Flask(__name__)
 
 ########################
@@ -11,8 +12,11 @@ app = Flask(__name__)
 # What mapping represent general category
 NUM_GENERAL_CATEGORY = 0
 
-# Number of recommendaions to provide
+# Number of recommendaions to provide in testrec page
 NUM_RECOMMENDATIONS = 10
+
+# Number of recommendaions to randomize from in content filtering
+NUM_RECOMMENDATIONS_C = 40
 
 # Ratio that identifies popularity for seasons
 RATIO_POPULAR_SEASON = 0.4
@@ -46,7 +50,7 @@ matrix_ccm_g = np.load('ccm_general.npy')
 matrix_season_price_instock = np.load('season_price_instock_indexed.npy')
 
 # load in content rating array
-matrix_content = np.load('asin_rating.npy')
+matrix_content = np.load('rating_indexed.npy')
 
 # load in customer ids
 list_cust_ids = list(np.load('custids.npy'))
@@ -237,7 +241,6 @@ def get_collabrec():
 	arg_demographic_region = int(request.args.get('demographic_region'))
 	arg_demographic_gender = int(request.args.get('demographic_gender'))
 	arg_cat_list = list(map(int, request.args.getlist('list_categories')))
-	#arg_purchase_list = list(map(int, request.args.getlist('list_purchases')))
 	arg_purchase_list = request.args.getlist('list_purchases')
 	arg_num_rec = int(request.args.get('num_rec'))
 	arg_season_list = request.args.getlist('list_seasons')
@@ -266,7 +269,6 @@ def get_collabrec():
 		price_filter_list = np.where(matrix_season_price_instock[:,4] >= arg_price)[0]
 		rowsum[price_filter_list] = 0
 
-
 	# filter by instock
 	instock_filter_list = np.where(matrix_season_price_instock[:,5] == 0)[0]
 	rowsum[instock_filter_list] = 0
@@ -286,12 +288,10 @@ def get_collabrec():
 	return Response(json.dumps(list_json),  mimetype='application/json')
 
 @app.route('/get_contentrec', methods=['GET'])
-def get_contentec():
+def get_contentrec():
 	# read in variables
 	arg_cat_list = list(map(int, request.args.getlist('list_categories')))
-	#arg_purchase_list = list(map(int, request.args.getlist('list_purchases')))
 	arg_purchase_list = request.args.getlist('list_purchases')
-	arg_num_rec = int(request.args.get('num_rec'))
 	arg_num_rec = int(request.args.get('num_rec'))
 	arg_season_list = request.args.getlist('list_seasons')
 	arg_price = int(request.args.get('max_price',0))
@@ -317,7 +317,6 @@ def get_contentec():
 		price_filter_list = np.where(matrix_season_price_instock[:,4] >= arg_price)[0]
 		rowsum[price_filter_list] = 0
 
-
 	# filter by instock
 	instock_filter_list = np.where(matrix_season_price_instock[:,5] == 0)[0]
 	rowsum[instock_filter_list] = 0
@@ -327,13 +326,75 @@ def get_contentec():
 
 	# Select top indexes
 	indices = np.nonzero(rowsum)[0]
-	toprec = indices[np.argsort(rowsum[indices])][-1 * arg_num_rec:][::-1]
+	randrec = indices[np.argsort(rowsum[indices])][-1 * NUM_RECOMMENDATIONS_C:][::-1]
+	randindices = np.random.permutation(randrec)[:arg_num_rec]
+	toprec = randindices[np.argsort(rowsum[randindices])][::-1]
 
 	list_json = []
 	for tr in toprec:
 		list_json.append({'asin': list_asin_names[tr], 'metric': rowsum[tr]})
 
 	#return jsonify(recommendations=list(toprec))
+	return Response(json.dumps(list_json),  mimetype='application/json')
+
+@app.route('/get_hybridrec', methods=['GET'])
+def get_hybridrec():
+	arg_demographic_region = int(request.args.get('demographic_region'))
+	arg_demographic_gender = int(request.args.get('demographic_gender'))
+	arg_cat_list = list(map(int, request.args.getlist('list_categories')))
+	arg_purchase_list = request.args.getlist('list_purchases')
+	arg_num_rec = int(request.args.get('num_rec'))
+	arg_season_list = request.args.getlist('list_seasons')
+	arg_price = int(request.args.get('max_price',0))
+
+	# Initialize empty recommendations
+	get_collabrec = []
+	get_contentrec = []
+	get_hybridrec = []
+
+	# Collaborative Filtering
+	# if no purchases don't use collaborative
+	if len(arg_purchase_list) > 0:
+		#Build query string for collaborative recommendation
+		str_collabrec = request.url_root + 'get_collabrec?' + "demographic_region=" + str(arg_demographic_region) + "&demographic_gender=" + str(arg_demographic_gender) + "&num_rec=" + str(arg_num_rec)
+		for p in arg_purchase_list:
+			str_collabrec += "&list_purchases=" + str(p)
+		for c in arg_cat_list:
+			str_collabrec += "&list_categories=" + str(c)
+		for s in arg_season_list:
+			str_collabrec += "&list_seasons=" + str(s)
+		if arg_price > 0:
+			 str_collabrec += "&max_price=" + str(arg_price)
+		get_collabrec = requests.get(str_collabrec).json()
+
+
+	# Content Filtering
+	# Build query string for content recommendation
+	str_contentrec = request.url_root + 'get_contentrec?' + "num_rec=" + str(arg_num_rec)
+	for p in arg_purchase_list:
+		str_contentrec += "&list_purchases=" + str(p)
+	for c in arg_cat_list:
+		str_contentrec += "&list_categories=" + str(c)
+	for s in arg_season_list:
+		str_contentrec += "&list_seasons=" + str(s)
+	if arg_price > 0:
+		 str_contentrec += "&max_price=" + str(arg_price)
+	get_contentrec = requests.get(str_contentrec).json()
+
+	# Hybrid Combiner
+	if len(arg_purchase_list) != 0:
+		for r in get_collabrec:
+			get_hybridrec.append(r['asin'])
+	for r in get_contentrec:
+		if r['asin'] not in get_hybridrec:
+			get_hybridrec.append(r['asin']) 
+		if len(get_hybridrec) >= arg_num_rec:
+			break
+
+	list_json = []
+	for hr in get_hybridrec:
+		list_json.append({'asin': hr})
+
 	return Response(json.dumps(list_json),  mimetype='application/json')
 
 ########################
@@ -363,6 +424,7 @@ def testrec():
 
 	arg_price = int(request.args.get('max_price',0))
 
+	# Page link creation
 	header_ahref = header_link(arg_catidlist, arg_custid, arg_seasonlist, arg_price)
 	sidebar_ahref = sidebar_links(arg_catidlist, arg_custid, arg_seasonlist, arg_price)
 
@@ -375,6 +437,13 @@ def testrec():
 	# Initialize empty recommendations
 	get_collabrec = []
 	get_contentrec = []
+	get_hybridrec = []
+
+	# Initialize runtime
+	time_collabrec = 0
+	time_contentrec = 0
+	time_hybridrec = 0
+	time_current = 0
 
 	# Collaborative Filtering
 	# if no purchases don't use collaborative
@@ -390,11 +459,11 @@ def testrec():
 			str_collabrec += "&list_seasons=" + str(s)
 		if arg_price > 0:
 			 str_collabrec += "&max_price=" + str(arg_price)
+		time_current = datetime.now()
 		get_collabrec = requests.get(str_collabrec).json()
-
+		time_collabrec = str((datetime.now() - time_current).total_seconds() * 1000) + " ms"
 
 	# Content Filtering
-	# TODO write function
 	# Build query string for content recommendation
 	str_contentrec = request.url_root + 'get_contentrec?' + "num_rec=" + str(NUM_RECOMMENDATIONS)
 	for p in get_purchases['purchases']:
@@ -406,21 +475,25 @@ def testrec():
 		str_contentrec += "&list_seasons=" + str(s)
 	if arg_price > 0:
 		 str_contentrec += "&max_price=" + str(arg_price)
+	time_current = datetime.now()
 	get_contentrec = requests.get(str_contentrec).json()
+	time_contentrec = str((datetime.now() - time_current).total_seconds() * 1000) + " ms"
 
 	# Hybrid Combiner
-	# TODO decide algorithm
-	get_hybridrec = []
-	if len(get_purchases['purchases']) != 0:
-		for r in get_collabrec:
-			get_hybridrec.append(r['asin'])
-		# TODO if not enough rec fill with content
-	for r in get_contentrec:
-		if r['asin'] not in get_hybridrec:
-			get_hybridrec.append(r['asin']) 
-		if len(get_hybridrec) >= NUM_RECOMMENDATIONS:
-			break
-	# TODO if not enough rec fill with collab
+	# Build query string for hybrid recommendation
+	str_hybridrec = request.url_root + 'get_hybridrec?' + "demographic_region=" + str(get_demoid['demographic_region']) + "&demographic_gender=" + str(get_demoid['demographic_gender']) + "&num_rec=" + str(NUM_RECOMMENDATIONS)
+	for p in get_purchases['purchases']:
+		str_hybridrec += "&list_purchases=" + str(p)
+	for c in arg_catidlist:
+		str_hybridrec += "&list_categories=" + str(c)
+	for s in arg_seasonlist:
+		print str(s)
+		str_hybridrec += "&list_seasons=" + str(s)
+	if arg_price > 0:
+		 str_hybridrec += "&max_price=" + str(arg_price)
+	time_current = datetime.now()
+	get_hybridrec = requests.get(str_hybridrec).json()
+	time_hybridrec = str((datetime.now() - time_current).total_seconds() * 1000) + " ms"
 
 	# Books in category
 	get_book_list = []
@@ -428,7 +501,6 @@ def testrec():
 		get_book_list.append(list_asin_names[b])
 	get_book_num = len(get_book_list)
 
-	#return render_template('testrec.html',cust_id=request.args.get('custid'),cat_id=request.args.get('catid'))
 	return render_template('testrec.html',**locals())
 
 # Rest service tester
