@@ -110,6 +110,12 @@ datalog = [{
 
 # union
 
+datalog = [{
+    'result': 'ans(pid, spring, summer, fall, winter)',
+    'table': ['postgres.seasonal_percentages(pid, spring, summer, fall, winter)'],
+    'limit': '10'
+    }]
+
 engine = HybridEngine(
                 postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
                 asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},

@@ -70,6 +70,20 @@ class PostgresEngine:
 
         return schema
 
+   #def get_schema(self, table):
+   #    sqlcmd = "select 1 from INFORMATION_SCHEMA.views WHERE table_name = '{}'".format(table.lower())
+   #    exists = self.execute(sqlcmd)
+   #    print("view exists")
+   #    if not exists:
+   #        sqlcmd = "select 1 from INFORMATION_SCHEMA.tables WHERE table_name = '{}'".format(table.lower())
+   #        exists = self.execute(sqlcmd)
+   #    if not exists:
+   #        fatal("table '{}' not exists in postgres".format(table))
+
+   #    sqlcmd = "select column_name, data_type from information_schema.columns where table_name = '{}'".format(table.lower())
+   #    result = self.execute(sqlcmd)
+   #    return result
+
     def create_table(self, table, schema):
         sqlcmd = "CREATE TABLE {}(\n".format(table)
         cols = []
