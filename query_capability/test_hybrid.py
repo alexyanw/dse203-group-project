@@ -1,33 +1,7 @@
 from hybrid_engine import HybridEngine
 
-# single source with original column name
-datalog1 = [
-    {
-    'result': 'Ans(numunits, firstname, billdate, orderid, customerid)',
-    'table': ['postgres.orders(orderid, customerid, campaignId, orderDate, city, state, zipCode, paymentType, totalPrice, numOrderLines, _)',
-            'postgres.customers(customerid, householdId, gender, firstname)',
-            'postgres.orderlines(orderLineId, orderid, productId, shipDate, billdate, unitPrice, numunits, _)',
-           ],
-    'condition': ['orderid > 1000', 'numunits > 1'],
-    'orderby': 'numunits DESC',
-    'limit': '10'
-    }
-]
-
-# single source with column renaming
-datalog2 = [
-    {
-    'result': 'Ans(nunits, fname, date, oid, customerid)',
-    'table': ['postgres.orders(oid, customerid, _, _, _, _, _, _, _, _, _)',
-            'postgres.customers(customerid, _, _, fname)',
-            'postgres.orderlines(olid, oid, _, _, date, _, nunits, _)',
-           ],
-    'condition': ['oid > 1000', 'nunits > 1'],
-    'limit': '10'
-    }
-]
 # multi source join
-datalog3 = [
+datalog = [
     {
     'result': 'Ans(pid, nunits, date, asin, nodeid)',
     'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
@@ -40,20 +14,6 @@ datalog3 = [
     }
 ]
 
-# single source aggregation
-#q(X, A) :- setof({Z}, {Y }, p(X, Y, Z), S), count(S, A)
-datalog4 = [
-    {
-    'result': 'Ans(pid, total_orders, total_value)',
-    'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
-            'postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
-            'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
-           ],
-    'condition': ['pid > 1000', "date > '2015-01-01'"],
-    'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},
-    'limit': '10'
-    }
-]
 
 # multi source aggregation
 datalog5 = [
@@ -116,7 +76,7 @@ datalog7 = [
 ]
 
 # view resolved in combiner
-datalog8 = [
+datalog = [
     {
     'result': 'temp(pid, cat, nunits, price)',
     'table': ['postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
@@ -134,16 +94,6 @@ datalog8 = [
     }
 ]
 
-# distinct = group by without aggregation
-datalog = [
-    {
-    'result': 'Ans(pid)',
-    'table': ['postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
-           ],
-    'groupby': { 'key': 'pid'},
-    'limit': '10'
-    }
-]
 
 # using local server, everything default
 #engine = HybridEngine()
@@ -151,6 +101,6 @@ engine = HybridEngine(
                 postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
                 asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
                 solr= {'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
-result = engine.queryDatalog(datalog, debug=True)
-#result = engine.queryDatalog(datalog)
+#result = engine.queryDatalog(datalog, debug=True)
+result = engine.queryDatalog(datalog)
 print(result)

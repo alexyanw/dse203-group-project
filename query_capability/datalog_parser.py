@@ -222,7 +222,6 @@ class DatalogParser:
                 if table not in self.table_conditions[source]:
                     self.table_conditions[source][table] = []
                 self.table_conditions[source][table].append([colname, '!=', value])
-                print("hhhh", value)
             else:
                 fatal("negation value must have variable bound in table '{}'".format(table))
                 #self.table_columns[tablename] = re.sub('\s','', str_columns).split(',')
