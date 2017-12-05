@@ -1,4 +1,5 @@
 import sys
+import writeback as Writeback
 
 class SourceTable:
     schema = {
@@ -32,8 +33,7 @@ class SourceTable:
 
     # uniform interface
     def get_views(self, features=[], **kwargs):
-        if len(features) == 0:
-            features = '*'
+        if len(features) == 0: features = '*'
 
         dbcmd = '''
 SELECT {}

@@ -1,10 +1,21 @@
 from hybrid_engine import HybridEngine
 
-#ReviewText(reviewid, avg_word_length, number_word_capital, ratio_exlamation_question, avg_sentence_length, ari, tfidf_100)
+#ReviewText(reviewid, avg_word_length, number_word_capital, ratio_exlamation_question, avg_sentence_length, tfidf_100, reviewText)
+# get just one feature
 datalog = [
         {
-        'result': 'Ans(asin, review)',
-        'table': ['solr.review_text(reviewid, asin, length, avg_word_length, number_word_capital, ratio_exlamation_question, avg_sentence_length, ari, tfidf_100)'],
+        'result': 'Ans(asin, reviewText)',
+        'table': ['solr.review_text(reviewid, asin, length, avg_word_length, number_word_capital, ratio_exlamation_question, avg_sentence_length, tfidf_100, reviewText)'],
+        'condition': ["length > 300"],
+        'limit': '2',
+        }
+    ]
+
+# get just multiple features
+datalog1 = [
+        {
+        'result': 'Ans(asin, length, avg_word_length, tfidf_100)',
+        'table': ['solr.review_text(reviewid, asin, length, avg_word_length, number_word_capital, ratio_exlamation_question, avg_sentence_length, tfidf_100, reviewText)'],
         'condition': ["length > 300"],
         'limit': '2',
         }

@@ -1,40 +1,50 @@
 import pandas as pd
 import math
+from utils import *
 
 class Writeback:
     schema = {
-            'CoOccurrenceCache': {
-                'asin_purchased': 'varchar(128)',
-                'asin_together': 'varchar(128)',
-                'metric': 'varchar(128)',
-                'catlvl1': 'varchar(128)',
-                'catlvl2': 'varchar(128)',
-                'catlvl3': 'varchar(128)',
-                'catlvl4': 'varchar(128)',
-                'catlvl5': 'varchar(128)',
-                'season1': 'varchar(128)',
-                'season2': 'varchar(128)',
-                'season3': 'varchar(128)',
-                'season4': 'varchar(128)',
-                'price_asin_together': 'int',
-                'demographic_region': 'int',
-                'demographic_gender': 'varchar(64)'
-                },
-            'RecommendationColaborative': {
-                'productid': 'integer',
-                'category': 'varchar(128)',
-                'rank': 'integer'
-                },
-            'RecommendationContent': {
-                'productid': 'integer',
-                'category': 'varchar(128)',
-                'rank': 'integer'
-                },
+            'cooccurrencecache': [
+                ('asin_purchased', 'varchar(128)'),
+                ('asin_together', 'varchar(128)'),
+                ('metric', 'varchar(128)'),
+                ('catlvl1', 'varchar(128)'),
+                ('catlvl2', 'varchar(128)'),
+                ('catlvl3', 'varchar(128)'),
+                ('catlvl4', 'varchar(128)'),
+                ('catlvl5', 'varchar(128)'),
+                ('season1', 'varchar(128)'),
+                ('season2', 'varchar(128)'),
+                ('season3', 'varchar(128)'),
+                ('season4', 'varchar(128)'),
+                ('price_asin_together', 'int'),
+                ('demographic_region', 'int'),
+                ('demographic_gender', 'varchar(64)'),
+                ],
+            'recommendationcolaborative': [
+                ('productid', 'integer'),
+                ('category', 'varchar(128)'),
+                ('rank', 'integer')
+                ],
+            'recommendationcontent': [
+                ('productid', 'integer'),
+                ('category', 'varchar(128)'),
+                ('rank', 'integer')
+                ],
             }
 
     def __init__(self, engine):
         self.engine = engine
         self.batch_size = 5000
+
+    #@classmethod
+    #def get_schema(cls, table):
+
+    @classmethod
+    def getColumn(cls, table, idx):
+        if table not in cls.schema:
+            fatal("writeback table '{}' doesn't exist\n".format(table))
+        return cls.schema[table][idx][0]
 
     def create(self, table):
         if table not in self.schema:

@@ -1,10 +1,25 @@
 from hybrid_engine import HybridEngine
+# single source with original column name
+datalog1 = [
+    {
+    'result': 'Ans(customer, order, date, numunits)',
+    'table': ['postgres.orders(order, customer, _, _, _, _, _, _, total_price, num_orderlines, _)',
+            'postgres.customers(customer, _, gender, _)',
+            'postgres.orderlines(orderLineId, order, _, _, date, _, numunits, _)',
+           ],
+    'condition': ['order > 1000', 'numunits > 1'],
+    'orderby': 'numunits DESC',
+    'limit': '10'
+    }
+]
 
+# single table
 datalog = [{
     'result': 'Ans(productid, fullprice)',
     'table': ['postgres.products(productid, nodeid, fullprice, isinstock)']
     }]
 
+# 3 way joining and condition
 datalog1 = [{
     'result': 'Ans(customerid, productid, numunits, billdate)',
     'table': ['postgres.orders(oid, customerid, campaignId, orderDate, city, state, zipCode, paymentType, totalPrice, numOrderLines, numUnits)',
@@ -40,7 +55,36 @@ datalog5 = [{
             'postgres.orderlines(orderLineId, orderid, productId, shipDate, billdate, unitPrice, numunits, totalPrice)'],
     }]
 
-# join
+# distinct - group without aggregation
+datalog = [
+        {
+            'result': 'Ans(asin)',
+            'table': ['postgres.orders(orderid, customerid, _, _, _, _, _, _, _, _, _)',
+            'postgres.customers(customerid, _, _, _)',
+            'postgres.orderlines(_, orderid, productid, _, _, _, _, _)',
+            'postgres.products(productid,_,_,_,_,_,asin,_)'
+                     ],
+            'condition': ['customerid=68099'],
+            'groupby': {'key':'asin'}
+        }
+    ]
+
+# group with aggregation
+#q(X, A) :- setof({Z}, {Y }, p(X, Y, Z), S), count(S, A)
+datalog4 = [
+    {
+    'result': 'Ans(pid, total_orders, total_value)',
+    'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
+            'postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
+            'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
+           ],
+    'condition': ['pid > 1000', "date > '2015-01-01'"],
+    'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},
+    'limit': '10'
+    }
+]
+
+# join of predefined views
 datalog6 = [{
     'result': 'Ans(product_a, product_b, pair_count)',
     'table': ['postgres.cooccurrence_matrix(product_a, product_b, pair_count)',
@@ -63,6 +107,8 @@ datalog = [{
         'groupby': {'key': 'product_a', 'aggregation': ['sum(pair_count, total_co_count)']}
         #'q(product_a, A) :- setof({pair_count}, E^b. CoMat(product_a, b, pair_count), S), sum(S, A)'
     }]
+
+# union
 
 engine = HybridEngine(
                 postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
