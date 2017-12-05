@@ -1,11 +1,13 @@
 import pandas as pd
 from sql_builder import SQLBuilder
 from source_schema import SourceTable
+from writeback import Writeback
 from product_view import ProductView
 from customer_view import CustomerView
 from cooccurrence_matrix import CoOccurrenceMatrix
 from sqlalchemy import create_engine,Table,MetaData
 from sqlalchemy.sql import text
+from utils import *
 
 
 __all__ = ['PostgresEngine']
@@ -32,6 +34,10 @@ class PostgresEngine:
             'zipcensus': SourceTable,
             'zipcounty': SourceTable,
         }
+        for table in SourceTable.schema:
+            self.schema_wrapper[table] = SourceTable
+        for table in Writeback.schema:
+            self.schema_wrapper[table] = Writeback
 
     def executeQuery(self, cmd, **kwargs):
         if 'debug' in kwargs:
@@ -41,10 +47,10 @@ class PostgresEngine:
         return df
 
     def query(self, datalog, **kwargs):
-        builder = SQLBuilder(datalog, self.schema_wrapper)
         views = []
+        builder = SQLBuilder(datalog, self.schema_wrapper)
         for table in datalog['tables']:
-            if self.schema_wrapper[table] == SourceTable: continue
+            if self.schema_wrapper[table] in [SourceTable, Writeback]: continue
             wrapper_class = self.schema_wrapper[table]
             views += wrapper_class().get_views(table=table, view=True,**kwargs)
         sqlcmd = builder.getQueryCmd()
@@ -64,10 +70,25 @@ class PostgresEngine:
 
         return schema
 
+   #def get_schema(self, table):
+   #    sqlcmd = "select 1 from INFORMATION_SCHEMA.views WHERE table_name = '{}'".format(table.lower())
+   #    exists = self.execute(sqlcmd)
+   #    print("view exists")
+   #    if not exists:
+   #        sqlcmd = "select 1 from INFORMATION_SCHEMA.tables WHERE table_name = '{}'".format(table.lower())
+   #        exists = self.execute(sqlcmd)
+   #    if not exists:
+   #        fatal("table '{}' not exists in postgres".format(table))
+
+   #    sqlcmd = "select column_name, data_type from information_schema.columns where table_name = '{}'".format(table.lower())
+   #    result = self.execute(sqlcmd)
+   #    return result
+
     def create_table(self, table, schema):
         sqlcmd = "CREATE TABLE {}(\n".format(table)
         cols = []
-        for col,type in schema.items():
+        for item in schema:
+            col,type = item
             cols.append("{} {}".format(col, type))
         sqlcmd += ",\n".join(cols) + "\n)"
         print(sqlcmd)

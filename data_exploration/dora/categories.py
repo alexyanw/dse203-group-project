@@ -16,7 +16,7 @@ class Categories(AsterixSource):
             ci.category.nested.nested.nested.nested.nested.level_5 AS level_5'''
 
     @log
-    def search(self, string_search = '', classfication_only=False):
+    def search(self, string_search = ''):
         query = '''
             SELECT '''+ self._fields + '''
             FROM ClassificationInfo ci
@@ -30,7 +30,9 @@ class Categories(AsterixSource):
         return self._execSqlPpQuery(query, {'search':string_search})
 
     @log
-    def parentsOf(self, node_id = 0, classfication_only=False):
+    def parentOf(self, node_id):
+        node_id = str(node_id)
+
         levelquery = '''
                     SELECT
                     CASE
@@ -79,18 +81,36 @@ class Categories(AsterixSource):
         if lvl == 1:
             query += '''WHERE ci.level_0 = "''' + level_0 + '''" AND ci.level_1 = "N/A";'''
         elif lvl == 2:
-            query += '''WHERE ci.level_1 = "''' + level_1 + '''" AND ci.level_2 = "N/A";'''
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 = "N/A";'''
         elif lvl == 3:
-            query += '''WHERE ci.level_2 = "''' + level_2 + '''" AND ci.level_3 = "N/A";'''
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 = "''' + level_2 + '''"
+                AND ci.level_3 = "N/A";'''
         elif lvl == 4:
-            query += '''WHERE ci.level_3 = "''' + level_3 + '''" AND ci.level_4 = "N/A";'''
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 = "''' + level_2 + '''"
+                AND ci.level_3 = "''' + level_3 + '''"
+                AND ci.level_4 = "N/A";'''
         elif lvl == 5:
-            query += '''WHERE ci.level_4 = "''' + level_4 + '''" AND ci.level_5 = "N/A";'''
-            	
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 = "''' + level_2 + '''"
+                AND ci.level_3 = "''' + level_3 + '''"
+                AND ci.level_4 = "''' + level_4 + '''"
+                AND ci.level_5 = "N/A";'''
+
         return self._execSqlPpQuery(query, {'node_id':node_id})
         
     @log
-    def childOf(self, node_id = 0, classfication_only=False):
+    def childrenOf(self, node_id = 0, classfication_only=False):
         levelquery = '''
                     SELECT
                     CASE
@@ -137,15 +157,39 @@ class Categories(AsterixSource):
         query = '''SELECT {node_id} as nodeID, ''' + str(lvl) + ''' as level, ci.node_id as parent_node_id FROM ClassificationInfo_Flattened ci '''
             	
         if lvl == 0:
-        	query += '''WHERE ci.level_0 = "''' + level_0 + '''" AND ci.level_1 != "N/A" AND ci.level_2 = "N/A";'''
+        	query += '''WHERE
+        	    ci.level_0 = "''' + level_0 + '''"
+        	    AND ci.level_1 != "N/A"
+        	    AND ci.level_2 = "N/A";'''
         elif lvl == 1:
-            query += '''WHERE ci.level_1 = "''' + level_1 + '''" AND ci.level_2 != "N/A" AND ci.level_3 = "N/A";'''
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 != "N/A"
+                AND ci.level_3 = "N/A";'''
         elif lvl == 2:
-            query += '''WHERE ci.level_2 = "''' + level_2 + '''" AND ci.level_5 != "N/A" AND ci.level_4 = "N/A";'''
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 = "''' + level_2 + '''"
+                AND ci.level_3 != "N/A"
+                AND ci.level_4 = "N/A";'''
         elif lvl == 3:
-            query += '''WHERE ci.level_3 = "''' + level_3 + '''" AND ci.level_4 != "N/A" AND ci.level_5 = "N/A";'''
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 = "''' + level_2 + '''"
+                AND ci.level_3 = "''' + level_3 + '''"
+                AND ci.level_4 != "N/A"
+                AND ci.level_5 = "N/A";'''
         elif lvl == 4:
-            query += '''WHERE ci.level_4 = "''' + level_4 + '''" AND ci.level_5 != "N/A";'''
+            query += '''WHERE
+                ci.level_0 = "''' + level_0 + '''"
+                AND ci.level_1 = "''' + level_1 + '''"
+                AND ci.level_2 = "''' + level_2 + '''"
+                AND ci.level_3 = "''' + level_3 + '''"
+                AND ci.level_4 = "''' + level_4 + '''"
+                AND ci.level_5 != "N/A";'''
             	
         return self._execSqlPpQuery(query, {'node_id':node_id})
     

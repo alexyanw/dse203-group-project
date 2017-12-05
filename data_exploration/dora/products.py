@@ -60,12 +60,13 @@ class Products(SqlSource):
     @log
     def priceDistribution(self, bins=5):
         bin_selects = self._createPriceBins(bins)
-
-        return self._execSqlQuery('''
+        query = '''
             SELECT {}
             FROM products p
             JOIN orderlines o
-                ON p.productid = o.productid'''.format(bin_selects))
+                ON p.productid = o.productid'''.format(bin_selects)
+
+        return self._execSqlQuery(query)
 
     @log
     def seasonalOrderDistribution(self, asin=[]):
@@ -123,17 +124,17 @@ class Products(SqlSource):
         """For each product, determine the how many 1, 2, 3, 4, and 5 star reviews the product received. 
 
         Args:
-            min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
-            asin (string):optional. The asins of the products the rating distrubtion will be produced
-            for. 
-            sample_size (int): optional. Percentage of the data the query will run over.
+            min_date (string): optional. date. inclusive bottom limit of reviewTime
+            max_date (string): optional. date. inclusive upper limit of reviewTime
+            asin (list):optional. The asins of the products the rating distrubtion will be produced
+            for. Defaults to returning distributions for all asins
+            sample_size (int): optional. Percentage of the reviews the query will run over.
         
         Returns:
-             tuple(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes',
-             'four_star_votes', 'five_star_votes): asin is the label for the book. productid is the
-             unique identifier for the product. one_star_votes is the number of one star reveiws the book
+            QueryResponse(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes',
+             'four_star_votes', 'five_star_votes) (tuple(str,int,int,int,int,int,int)):
+             asin is the label for the book. productid is the unique identifier for the product.
+             one_star_votes is the number of one star reveiws the book
              received. two_star_votes is the number of two star reveiws the book received. 
              three_star_votes is the number of three star reveiws the book received. four_star_votes is
              the number of four star reveiws the book received. five_star_votes is the number of five
@@ -331,6 +332,16 @@ class Products(SqlSource):
                })
 
     @log
+    def byCategory(self, nodeid):
+        nodeid_filter = (' WHERE nodeid in %(nodeid)s '
+            if type(nodeid) is list
+            else ' WHERE nodeid = %(nodeid)s ')
+        return self._execSqlQuery('''
+            SELECT productid
+            FROM products'''
+            +nodeid_filter, {'nodeid':tuple(nodeid) if type(nodeid) is list else str(nodeid)})
+
+    @log
     def clusterProducts(self,
                         feature_set=None,
                         n_clusters=8,
@@ -347,7 +358,9 @@ class Products(SqlSource):
                         ],
                         random_state=None,
                         asin=None,
-                        scale=False):
+                        scale=False,
+                        PCA=False,
+                        n_components=8):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
         results as the features (num_orders, avgrating, category, and days_on_sale).
 
@@ -375,6 +388,10 @@ class Products(SqlSource):
         response=self.seasonalOrderDistribution(asin=data_asin)
         df=pd.DataFrame(response.results,columns=response.columns)
         data=data.merge(df, on=['productid','asin'],how='outer')
+        ratings=self.ratingsDistribution(asin=data_asin)
+        df=pd.DataFrame(ratings.results,columns=ratings.columns)
+        data=data.merge(df, on=['productid','asin'],how='outer')
+        
 
         if (data[cluster_on].isnull().values.any()):
             data = data.dropna()

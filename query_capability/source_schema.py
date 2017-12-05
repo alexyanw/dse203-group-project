@@ -1,4 +1,5 @@
 import sys
+import writeback as Writeback
 
 class SourceTable:
     schema = {
@@ -11,6 +12,13 @@ class SourceTable:
         'reviews': ['reviewid', 'asin', 'reviewername', 'helpful', 'unixreviewtime', 'reviewtext', 'overall', 'reviewtime', 'summary'],
         'subscribers': ['subscriberid', 'rateplan', 'monthlyfee', 'market', 'channel', 'startdate', 'stopdate', 'stoptype', 'tenure', 'isactive'],
         'zipcounty': ['zipcode', 'latitude', 'longitude', 'poname', 'zipclass', 'countyfips', 'state', 'countyname', 'countypop', 'countyhu', 'countylandareamiles', 'countywaterareamiles'],
+        # views
+        'seasonal_percentages': ['productid', 'spring', 'summer', 'fall', 'winter'],
+        'reviewcount': ['reviewid', 'reviewercount'],
+        'bookcount': ['asin', 'bookreviewcount'],
+        'reviewvotesage': ['reviewid', 'asin', 'rating', 'votesforreview', 'outof', 'age', 'reviewtext', 'summary'],
+        'p_instock_fp_d': ['productid', 'fullprice_d', 'isinstock_d', 'asin'],
+        'regions_map': ['customerid', 'region', 'gender']
     }
 
     def __init__(self, table):
@@ -32,8 +40,7 @@ class SourceTable:
 
     # uniform interface
     def get_views(self, features=[], **kwargs):
-        if len(features) == 0:
-            features = '*'
+        if len(features) == 0: features = '*'
 
         dbcmd = '''
 SELECT {}

@@ -1,5 +1,6 @@
 from hybrid_engine import HybridEngine
 
+
 datalog1 = [
         {
         'result': 'Ans(nodeid)',
@@ -17,6 +18,11 @@ datalog = [
         }
     ]
 
-engine = HybridEngine()
-query = engine.queryDatalog(datalog)
-print(query['asterix'])
+#engine = HybridEngine()
+engine = HybridEngine(
+                postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
+                asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
+                solr= {'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
+#result = engine.queryDatalog(datalog, debug=True)
+result = engine.queryDatalog(datalog)
+print(result)

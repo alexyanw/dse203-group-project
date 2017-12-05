@@ -1,4 +1,5 @@
 __all__ = ['SQLBuilder']
+import re
 
 class SQLBuilder:
     def __init__(self, q, schema=None):
@@ -49,7 +50,9 @@ class SQLBuilder:
             for cond in conditions:
                 lop = self.getColumnName(table, cond[0])
                 rop = self.getColumnName(table, cond[2])
-                arith_conds.append("{} {} '{}'".format(lop, cond[1], rop))
+                if not re.search("'.*'", rop): rop = "'"+rop+"'"
+                op = cond[1]
+                arith_conds.append("{} {} {}".format(lop, op, rop))
         return arith_conds
 
     def getQueryCmd(self):

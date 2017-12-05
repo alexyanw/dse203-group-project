@@ -12,7 +12,7 @@ def list2dict(data):
 
 class ReviewText:
     schema = {
-        'review_text': ['reviewerID', 'asin', 'review_length', 'avg_word_length', 'number_word_capital', 'ratio_exlamation_question', 'avg_sentence_length', 'ari', 'tfidf_100']
+        'review_text': ['reviewerID', 'asin', 'review_length', 'avg_word_length', 'number_word_capital', 'ratio_exlamation_question', 'avg_sentence_length', 'tfidf_100', 'reviewText']
     }
     @classmethod
     def getColumn(cls, table, idx):
@@ -31,8 +31,9 @@ class ReviewText:
                 'number_word_capital': self.get_null,
                 'ratio_exlamation_question': self.get_null,
                 'avg_sentence_length': self.get_null,
-                'ari': self.get_null,
+                #'ari': self.get_null,
                 'tfidf_100': self.get_tfidf,
+                'reviewText': self.get_raw,
                 }
         }
         self.term_vectors = None
