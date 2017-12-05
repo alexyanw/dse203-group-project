@@ -332,6 +332,16 @@ class Products(SqlSource):
                })
 
     @log
+    def byCategory(self, nodeid):
+        nodeid_filter = (' WHERE nodeid in %(nodeid)s '
+            if type(nodeid) is list
+            else ' WHERE nodeid = %(nodeid)s ')
+        return self._execSqlQuery('''
+            SELECT productid
+            FROM products'''
+            +nodeid_filter, {'nodeid':tuple(nodeid) if type(nodeid) is list else str(nodeid)})
+
+    @log
     def clusterProducts(self,
                         feature_set=None,
                         n_clusters=8,
@@ -348,7 +358,9 @@ class Products(SqlSource):
                         ],
                         random_state=None,
                         asin=None,
-                        scale=False):
+                        scale=False,
+                        PCA=False,
+                        n_components=8):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
         results as the features (num_orders, avgrating, category, and days_on_sale).
 
@@ -376,6 +388,10 @@ class Products(SqlSource):
         response=self.seasonalOrderDistribution(asin=data_asin)
         df=pd.DataFrame(response.results,columns=response.columns)
         data=data.merge(df, on=['productid','asin'],how='outer')
+        ratings=self.ratingsDistribution(asin=data_asin)
+        df=pd.DataFrame(ratings.results,columns=ratings.columns)
+        data=data.merge(df, on=['productid','asin'],how='outer')
+        
 
         if (data[cluster_on].isnull().values.any()):
             data = data.dropna()
