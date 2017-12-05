@@ -376,6 +376,9 @@ class Products(SqlSource):
         response=self.seasonalOrderDistribution(asin=data_asin)
         df=pd.DataFrame(response.results,columns=response.columns)
         data=data.merge(df, on=['productid','asin'],how='outer')
+        ratings=self.ratingsDistribution(asin=data_asin)
+        df=pd.DataFrame(ratings.results,columns=ratings.columns)
+        data=data.merge(df, on=['productid','asin'],how='outer')
 
         if (data[cluster_on].isnull().values.any()):
             data = data.dropna()
