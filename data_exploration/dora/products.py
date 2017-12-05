@@ -348,7 +348,9 @@ class Products(SqlSource):
                         ],
                         random_state=None,
                         asin=None,
-                        scale=False):
+                        scale=False,
+                        PCA=False,
+                        n_components=8):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
         results as the features (num_orders, avgrating, category, and days_on_sale).
 
@@ -379,6 +381,7 @@ class Products(SqlSource):
         ratings=self.ratingsDistribution(asin=data_asin)
         df=pd.DataFrame(ratings.results,columns=ratings.columns)
         data=data.merge(df, on=['productid','asin'],how='outer')
+        
 
         if (data[cluster_on].isnull().values.any()):
             data = data.dropna()
