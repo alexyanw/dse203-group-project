@@ -1,4 +1,4 @@
-1. Please make sure the following files are in this directory, which can be gotten from ../data
+1. Please make sure the following files are in the ../data (some need to be unzipped)
 
 * categories_indexed.npy - for looking up categories for products
 * cats.txt - category name lookup
