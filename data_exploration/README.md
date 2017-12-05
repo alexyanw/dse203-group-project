@@ -23,3 +23,14 @@ d = DataExplorer()
 response = d.products.ratingsDistribution()
 ```
 
+## Documentation
+Hosted docs: https://j-goldsmith.github.io/dora-docs/dora.html#dora-package
+
+### Building Documentation
+```
+pip install Sphinx
+pip install sphinxcontrib-napoleon
+cd dse203-group-project/data_exploration
+sphinx-apidoc -f -o docs/source dora
+sphinx-build -b html docs/source docs/build
+```
