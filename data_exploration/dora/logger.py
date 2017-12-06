@@ -6,6 +6,8 @@ from .benchmarks import Benchmarks
 from .config import Config
 
 def log(f):
+    """Decorator function to log API function calls to local log file and to SqlSource."""
+
     _log_file = '.log'
 
     if not os.path.isfile(_log_file):
