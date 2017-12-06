@@ -26,4 +26,7 @@ result = ISQE.execute('ans(rid,summary)->reviewFeatures_view(rid, asin, rating, 
 #result = ISQE.execute('Ans(asin)->Cust_Prod(customerid,householdid,gender,firstname,orderid,campaignid,orderdate,city,state,zipcode,paymenttype,order_totalprice,numorderlines,order_numunits,orderlineid,productid,shipdate,billdate,unitprice,ol_numunits,ol_totalprice,isinstock,fullprice,asin,nodeid)', ['customerid=68099']);
 
 # result = ISQE.execute('ans(asin)->cust_prod(cid,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,asin,_)',['cid=68099'])
+
+#result = ISQE.execute('ans(nodeid, cat)->CategoryFlat_view(nodeid,cat)', ["cat = 'Education;Children & Teens'"], debug=True)
+
 print(result)
