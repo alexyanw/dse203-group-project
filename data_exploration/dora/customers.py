@@ -14,17 +14,21 @@ class Customers(SqlSource):
 
         Args:
             min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
+            max_date (string): optional. date. Limits the search result timeframe.
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(householdid, TotalSpent, TotalOrders, first_order, last_order, time_as_customer,
-             time_since_last_order): householdid is the unique household id. TotalSpent is the amount of
-             money spenton all order. TotalOrders is the number of orders that have been made by that
-             household. first_order is the time when the first order was made. last_order is the time
-             since the lastorder. time_as_customer is the time the members of the household has been
-             customers. """
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['HouseholdID', 'TotalSpent', 'TotalOrders', 'first_order', 'last_order', 'time_as_customer','time_since_last_order']
+
+                results (:obj:`list` of :obj:`tuple(int,float,int,date,date,interval,interval)`)
+
+
+                householdid is the unique household id. TotalSpent is the amount of
+                money spenton all order. TotalOrders is the number of orders that have been made by that
+                household. first_order is the time when the first order was made. last_order is the time
+                since the lastorder. time_as_customer is the time the members of the household has been
+                customers. """
         
         max_date_filter = ' AND o.orderdate <= %(max_date)s ' if max_date else ' '
         
@@ -55,16 +59,22 @@ class Customers(SqlSource):
             })
 
     @log
-    def membersOfHousehold(self,householdID=0, sample_size=100):
+    def membersOfHousehold(self,householdID, sample_size=100):
         """For each household, find the customerid, firstname, and gender for each member. 
         
         Args:
-            householdID (stirng): optional. The householdID that the members will be found of.
+            householdID (int): The householdID that the members will be found of.
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(customerid, firstname, gender): customerid is the unique customer id. firstname is the
-             name of the customer. gender is the gender of the customer. """
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['customerid', 'firstname', 'gender']
+
+                results (:obj:`list` of :obj:`tuple(int,str,str)`)
+
+
+                customerid is the unique customer id. firstname is the
+                name of the customer. gender is the gender of the customer. """
         
         query=('''
 	    SELECT
@@ -79,19 +89,23 @@ class Customers(SqlSource):
             })
 
     @log
-    def productsByHousehold(self, min_date='1900-1-1', max_date=None, householdID=0, sample_size=100):
+    def productsByHousehold(self,householdID, min_date='1900-1-1', max_date=None, sample_size=100):
         """For each household, all of the products that have been purchased.  
         
         Args:
+            householdID (int): The householdID that the members will be found of.
             min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
-            householdID (stirng): optional. The householdID that the members will be found of.
+            max_date (string): optional. date. Limits the search result timeframe.
             sample_size (int): optional. Percentage of the data the query will run over.
         
-        Returns:
-             tuple(productid, asin, gender): product is the unique product id. asin is the product code
-             of the product that was purchased. """
+         Returns:
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['productid', 'asin']
+
+                results (:obj:`list` of :obj:`tuple(int,str)`)
+
+
+                product is the unique product id. asin is the product code of the product that was purchased. """
         
         max_date_filter = ' AND orders.orderdate <= %(max_date)s ' if max_date else ' '
         
@@ -120,6 +134,17 @@ class Customers(SqlSource):
 
     @log
     def idsForCustomer(self, customermatchedids = []):
+        """Find all customerid for customermatchedid
+
+        Args:
+            customermatchedids (list): optional. list of customermatchedids to filter on.
+
+        Returns:
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['customermatchedid', 'customerid']
+
+                results (:obj:`list` of :obj:`tuple(int,int)`)"""
+
         return self._execSqlQuery('''
             SELECT *
             FROM customers_matched_customerids
@@ -135,21 +160,25 @@ class Customers(SqlSource):
 
         Args:
             min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
+            max_date (string): optional. date. Limits the search result timeframe.
             householdid (tuple): optional. householdids that will be excluded from the query results.
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(numOrders, gender, zipcode, TotalPop, MedianAge, TotalMales, TotalFemales,
-             TotalSpent,householdid, firstname,numCustomerid ): numOrders is the number of times a
-             customer has purchased a book. gender is the gender of the customer. zipcode identifiies 
-             the customers location.  TotalPop is the total population for the zipcode. MedianAge is 
-             the median age of the population for the zipcode. TotalMales is the total number of males 
-             of the population for the zipcode. TotalFemales is the total number of females of the
-             population for the zipcode. TotalSpent is the total amount the customer has spent on books. 
-             householdid is the customer's hosuehold identification. firstname is the customer's name.
-             numCustomerid is the number of customerids per customer.
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['numOrders', 'gender', 'zipcode', 'TotalPop', 'MedianAge', 'TotalMales', 'TotalFemales','TotalSpent','householdid', 'firstname','numCustomerid' ]
+
+                results (:obj:`list` of :obj:`tuple(int,str,int,int,float,int,int,float,int,str,int)`)
+
+
+                numOrders is the number of times a
+                customer has purchased a book. gender is the gender of the customer. zipcode identifiies
+                the customers location.  TotalPop is the total population for the zipcode. MedianAge is
+                the median age of the population for the zipcode. TotalMales is the total number of males
+                of the population for the zipcode. TotalFemales is the total number of females of the
+                population for the zipcode. TotalSpent is the total amount the customer has spent on books.
+                householdid is the customer's hosuehold identification. firstname is the customer's name.
+                numCustomerid is the number of customerids per customer.
         """
         
         max_date_filter = ' AND o.orderdate <= %(max_date)s ' if max_date else ' '
@@ -232,38 +261,42 @@ class Customers(SqlSource):
                              'totalfemales'
                          ],
                          scale=False):
-        """Clusters the customers together based on gender, zipcode, numOrders, and TotalSpent. 
+        """Clusters the customers together based on cluster_on parameter.
+
         Args:
             feature_set (QueryResponse or dictionary): optional. must have keys 'results' and 'columns'.
             Data that will be clustered.
-            num_clusters (int): optional. default=8 The number of clusters to form as well as
-            the number of centroids to generate.
-            algorithm (string): optional. “auto”, “full” or “elkan”, default=”auto”. K-means algorithm 
-            to use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient
-            by using the triangle inequality, but currently doesn’t support sparse data. “auto” chooses
-            “elkan” for dense data and “full” for sparse data.
-            init (string): optional. {‘k-means++’, ‘random’ or an ndarray}. Method for initialization,
-            defaults to ‘k-means++’:‘k-means++’ : selects initial cluster centers for k-mean 
-            clustering in a smart way to speed up convergence. See section Notes in k_init for more
-            details.
-            ‘random’: choose k observations (rows) at random from data for the initial centroids.
-            If an ndarray is passed, it should be of shape (n_clusters, n_features) and gives the 
-            initial centers.
+            num_clusters (int): optional. default=8 The number of clusters to form as well as the number of centroids to generate.
+            algorithm (string): optional. “auto”, “full” or “elkan”, default=”auto”.
+                K-means algorithm to use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient
+                by using the triangle inequality, but currently doesn’t support sparse data. “auto” chooses
+                “elkan” for dense data and “full” for sparse data.
+            init (string): optional. {‘k-means++’, ‘random’ or an ndarray}.
+                Method for initialization, defaults to ‘k-means++’
+                ‘k-means++’ : selects initial cluster centers for k-mean clustering in a smart way to speed up convergence. See section Notes in k_init for more details.
+                ‘random’: choose k observations (rows) at random from data for the initial centroids.
+                If an ndarray is passed, it should be of shape (n_clusters, n_features) and gives the
+                initial centers.
             cluster_on (list of str): column names to use as cluster features
+            scale (bool): scale features
         
         Returns:
-             tuple(numorders', 'gender', 'totalpop', 'totalspent', 'zipcode', 'customermatchedid',
-             'medianage', 'totalmales', 'totalfemales', 'householdid', 'firstname', 'numcustomerid',
-             'cluster', 'customerids): numOrders is the number of times a customer has purchased a book.
-             gender is the gender of the customer. zipcode identifiies the customers location.  TotalPop
-             is the total population for the zipcode. MedianAge is the median age of the population for
-             the zipcode. customermatchedid is the number of customerids that matched with the customer.
-             TotalMales is the total number of males of the population for the zipcode. TotalFemales is
-             the totalnumber of females of the population for the zipcode. TotalSpent is the total amount
-             the customer has spent on books. householdid is the customer's hosuehold identification.
-             firstname is the customer's name.numCustomerid is the number of customerids per customer.
-             cluster is the label of the cluster the customer belongs to. customerids is a list of all
-             the customerids that correspond to that customer. 
+             QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['numorders', 'gender', 'totalpop', 'totalspent', 'zipcode', 'customermatchedid','medianage', 'totalmales', 'totalfemales', 'householdid', 'firstname', 'numcustomerid','cluster', 'customerids' ]
+
+                results (:obj:`list` of :obj:`tuple(int,str,int,int,float,int,int,float,int,str,int,int,list(int))`)
+
+
+                numOrders is the number of times a customer has purchased a book.
+                gender is the gender of the customer. zipcode identifiies the customers location.  TotalPop
+                is the total population for the zipcode. MedianAge is the median age of the population for
+                the zipcode. customermatchedid is the number of customerids that matched with the customer.
+                TotalMales is the total number of males of the population for the zipcode. TotalFemales is
+                the totalnumber of females of the population for the zipcode. TotalSpent is the total amount
+                the customer has spent on books. householdid is the customer's hosuehold identification.
+                firstname is the customer's name.numCustomerid is the number of customerids per customer.
+                cluster is the label of the cluster the customer belongs to. customerids is a list of all
+                the customerids that correspond to that customer.
         """
         if feature_set is None:
             feature_set = self.statsByCustomer()

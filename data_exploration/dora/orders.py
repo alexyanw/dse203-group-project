@@ -10,15 +10,19 @@ class Orders(SqlSource):
 
         Args:
             min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
+            max_date (string): optional. date. Limits the search result timeframe.
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(countyname, countypop, 'NumofOrders', 'TotalSpending'): countyname is the name of the
-             county the zipcode corresonds to. countypop is the population of the county. NumofOrders is
-             the number of orders that have been purchased by customers in the zipcode. TotalSpending is
-             the amount of money customers in the zipcode have purchased."""
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['countyname', 'countypop', 'NumofOrders', 'TotalSpending']
+
+                results (:obj:`list` of :obj:`tuple(str,int,int,float))`
+
+                countyname is the name of the
+                county the zipcode corresonds to. countypop is the population of the county. NumofOrders is
+                the number of orders that have been purchased by customers in the zipcode. TotalSpending is
+                the amount of money customers in the zipcode have purchased."""
         
         max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
 
@@ -53,22 +57,27 @@ class Orders(SqlSource):
 
         Args:
             min_date (string): optional. date. Limits the search result timeframe.
-            max_date (string): optional. date. Limits the timeframe for which 
-            customers results will be returned
-            sample_size (int): optional. Percentage of the data the query will run over.
+            max_date (string): optional. date.Limits the search result timeframe.
+            sample_size (int): optional. Percentage of the orders the query will run over.
         
         Returns:
-             tuple(productid, asin, num_orders, first_order, last_order, days_on_sale, unitprice_min,
-             unitprice_max, uniteprice_avg, numunits_min, numunits_max, numunits_avg, numunites_sum,
-             totalprice_min, totalprice_max, totalprice_avg, totalprice_sum): productid is the unique
-             identifier for the product. asin is the asin for the product. first_order is the date of the
-             first product being shipped. last_order is the last day an order was shipped. days_on_sale
-             is the total number of days the product was on sale. unitprice_min is the minimum price the
-             product. unitprice_max is the maximum price for the product. unitprice_avg is the average
-             price for the product. numunits_min is the minimum number of times the book was purchased in
-             one order. numunits_max is the largest number of times the book was purchased in one order.
-             numunits_avg is the average number of times the book was purchased in the same order.
-             numunits_sum is the number of times the book was purchased."""
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['productid', 'asin', 'num_orders',
+                    'first_order', 'last_order', 'days_on_sale', 'unitprice_min','unitprice_max',
+                    'uniteprice_avg', 'numunits_min', 'numunits_max', 'numunits_avg', 'numunites_sum',
+                    'totalprice_min', 'totalprice_max', 'totalprice_avg', 'totalprice_sum']
+
+                results (:obj:`list` of :obj:`tuple(str,int,int,float))`
+
+                productid is the unique identifier for the product. asin is the asin for the product.
+                first_order is the date of the first product being shipped.
+                last_order is the last day an order was shipped. days_on_sale
+                is the total number of days the product was on sale. unitprice_min is the minimum price the
+                product. unitprice_max is the maximum price for the product. unitprice_avg is the average
+                price for the product. numunits_min is the minimum number of times the book was purchased in
+                one order. numunits_max is the largest number of times the book was purchased in one order.
+                numunits_avg is the average number of times the book was purchased in the same order.
+                numunits_sum is the number of times the book was purchased."""
 
         max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
 

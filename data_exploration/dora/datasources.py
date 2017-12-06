@@ -11,24 +11,33 @@ from json import loads
 from .vis import QueryVis
 
 class QueryResponse(object):
+    """Main response object for API queries"""
     def __init__(self, columns, results):
-        self.vis = QueryVis(columns, results)
+        self._vis = QueryVis(columns, results)
         self.columns = columns
         self.results = results
         self.is_cached = False
 
 
     def __str__(self):
+        """_str__ override for convenience"""
         return str({
             'columns':self.columns,
             'results':self.results,
             'is_cached':self.is_cached
         })
 
+    @property
+    def vis(self):
+        """QueryVis object for visualization convenience"""
+        return self._vis
+
     def to_csv(self, path):
+        """convert response results to a csv with header, saved to path"""
         return self.to_pandas().to_csv(path)
 
     def to_pandas(self):
+        """convert response results to pandas dataframe, all default pandas settings"""
         return pd.DataFrame(data=self.results, columns=self.columns)
 
 class Cacheable(object):

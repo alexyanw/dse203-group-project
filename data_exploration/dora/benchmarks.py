@@ -17,7 +17,7 @@ class Benchmarks(SqlSource):
             QueryResponse:
                 columns (:obj:`list` of :obj:`str`): ['function_name','is_cached','avg_runtime_seconds','total_runtime_seconds','invocations']
 
-                results (:obj:`list` of :obj:`tuple(str,bool,float,float,int)`
+                results (:obj:`list` of :obj:`tuple(str,bool,float,float,int))`
         """
         function_filter = ' AND function_name IN %(function_list)s ' if (type(function_filter) is list) & (len(function_filter) > 0) else ' '
         max_date_filter = ' AND start <= %(max_date)s' if max_date else ' '
@@ -59,7 +59,7 @@ class Benchmarks(SqlSource):
             QueryResponse:
                 columns (:obj:`list` of :obj:`str`): ['clientid','hour','api_calls']
 
-                results (:obj:`list` of :obj:`tuple(str,int,int)`
+                results (:obj:`list` of :obj:`tuple(str,int,int))`
         """
 
         max_date_filter = ' AND start <= %(max_date)s' if max_date else ' '
@@ -119,7 +119,7 @@ class Benchmarks(SqlSource):
                 GROUP BY h.ofDay
                 ORDER BY h.ofDay;
             ''',{
-                'client_list':clientids,
+                'client_list':clientid_filter,
                 'min_date':min_date,
                 'max_date':max_date,
                 'random_seed':self._random_seed,
@@ -127,7 +127,7 @@ class Benchmarks(SqlSource):
             })
 
     def insert(self, function, args, kwargs, start, end, is_cached, client_id):
-        """Log an API call."""
+        """Log an API call to SqlSource."""
         self._execSqlInsert('''
             INSERT INTO eda_benchmarks
             (

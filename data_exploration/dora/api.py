@@ -16,45 +16,45 @@ class DataExplorer:
         with a Config object.
         """
     def __init__(self, config=Config()):
-        self.products = Products(config.sql_config)
-        self.reviews = Reviews(config.sql_config, config.solr_config)
-        self.orders = Orders(config.sql_config)
-        self.categories = Categories(config.asterix_config)
-        self.customers = Customers(config.sql_config)
-        self.benchmarks = Benchmarks(config.sql_config)
-        self.recommendations = Recommendations(config.sql_config)
+        self._products = Products(config.sql_config)
+        self._reviews = Reviews(config.sql_config, config.solr_config)
+        self._orders = Orders(config.sql_config)
+        self._categories = Categories(config.asterix_config)
+        self._customers = Customers(config.sql_config)
+        self._benchmarks = Benchmarks(config.sql_config)
+        self._recommendations = Recommendations(config.sql_config)
 
     @property
     def products(self):
         """SqlSource: submodule to query products"""
-        return self.products
+        return self._products
 
     @property
     def reviews(self):
         """SqlSource, SolrSource: submodule to query reviews"""
-        return self.reviews
+        return self._reviews
 
     @property
     def orders(self):
         """SqlSource: submodule to query orders"""
-        return self.orders
+        return self._orders
 
     @property
     def categories(self):
         """AsterixSource: submodule to query categories"""
-        return self.categories
+        return self._categories
 
     @property
     def customers(self):
         """SqlSource: submodule to query customers"""
-        return self.customers
+        return self._customers
 
     @property
     def benchmarks(self):
         """SqlSource: submodule to query api benchmarks"""
-        return self.benchmarks
+        return self._benchmarks
 
     @property
     def recommendations(self):
         """SqlSource: submodule to query ML model output"""
-        return self.recommendations
+        return self._recommendations

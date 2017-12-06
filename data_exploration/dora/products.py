@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import numpy as np
+from sklearn.decomposition import PCA
 
 
 class Products(SqlSource):
@@ -59,6 +60,17 @@ class Products(SqlSource):
 
     @log
     def priceDistribution(self, bins=5):
+        """Produces statistics for each product.
+
+        Args:
+            bins (int or list of tuple(int,int)): If bins is an int, prices are bin'd with steps (max price-min price)/bin. A list of tuples can be used to create you own bin limits.
+
+        Returns:
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['count_<bin min>_to_<bin max>'...]
+
+                results (:obj:`list` of :obj:`tuple(int, int...))`)
+               """
         bin_selects = self._createPriceBins(bins)
         query = '''
             SELECT {}
@@ -70,6 +82,18 @@ class Products(SqlSource):
 
     @log
     def seasonalOrderDistribution(self, asin=[]):
+        """Produces statistics for each product.
+
+        Args:
+           asin (list of str): asin product filter
+
+        Returns:
+           QueryResponse:
+               columns (:obj:`list` of :obj:`str`): ['asin','productid','spring_sales','summer_sales','fall_sales','winter_sales']
+
+               results (:obj:`list` of :obj:`tuple(str, int, int, int, int, int))`)
+              """
+
         asin_filter = ' WHERE p.asin IN %(asin_list)s ' if len(asin) > 0 else ' '
 
         query = ('''
@@ -115,9 +139,9 @@ class Products(SqlSource):
               GROUP BY p.asin, p.productid''')
 
         return self._execSqlQuery(query,
-                                  {
-                                      'asin_list': tuple(asin)
-                                  })
+            {
+              'asin_list': tuple(asin)
+            })
 
     @log
     def ratingsDistribution(self, min_date='1900-1-1', max_date=None, asin=[], sample_size=100):
@@ -126,19 +150,21 @@ class Products(SqlSource):
         Args:
             min_date (string): optional. date. inclusive bottom limit of reviewTime
             max_date (string): optional. date. inclusive upper limit of reviewTime
-            asin (list):optional. The asins of the products the rating distrubtion will be produced
-            for. Defaults to returning distributions for all asins
+            asin (list): optional. The asins of the products the rating distrubtion will be produced for. Defaults to returning distributions for all asins
             sample_size (int): optional. Percentage of the reviews the query will run over.
         
         Returns:
-            QueryResponse(asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes',
-             'four_star_votes', 'five_star_votes) (tuple(str,int,int,int,int,int,int)):
-             asin is the label for the book. productid is the unique identifier for the product.
-             one_star_votes is the number of one star reveiws the book
-             received. two_star_votes is the number of two star reveiws the book received. 
-             three_star_votes is the number of three star reveiws the book received. four_star_votes is
-             the number of four star reveiws the book received. five_star_votes is the number of five
-             star reveiws the book received. """
+           QueryResponse:
+               columns (:obj:`list` of :obj:`str`): [asin, productid, 'one_star_votes', 'two_star_votes', 'three_star_votes','four_star_votes', 'five_star_votes']
+
+               results (:obj:`list` of :obj:`tuple(str,int,int,int,int,int,int)`)
+
+                asin is the label for the book. productid is the unique identifier for the product.
+                one_star_votes is the number of one star reveiws the book
+                received. two_star_votes is the number of two star reveiws the book received.
+                three_star_votes is the number of three star reveiws the book received. four_star_votes is
+                the number of four star reveiws the book received. five_star_votes is the number of five
+                star reveiws the book received. """
 
         max_date_filter = ' AND r.ReviewTime <= %(max_date)s' if max_date else ' '
 
@@ -212,16 +238,20 @@ class Products(SqlSource):
         and the number of times that book was purchased.
 
         Args:
-            asin (list): required. book asin ids. Determines the books that coPurchases will 
-            be searched for. 
+            asin (list): required. book asin ids. Determines the books that coPurchases will be searched for.
             min_date (string): optional. date. Limits the search result timeframe.
             max_date (string): optional. date. Limits the search result timeframe.
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(asin, numPurch): asin is the identification of the book that was purchased 
-             in the same order as one of the input bools. numPurch is the number of times 
-             the book the book was purchased.   
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['asin', 'numPurch']
+
+                results (:obj:`list` of :obj:`tuple(str,int)`)
+
+                asin is the identification of the book that was purchased
+                in the same order as one of the input bools. numPurch is the number of times
+                the book the book was purchased.
         """
 
         if len(asin) == 0:
@@ -289,11 +319,15 @@ class Products(SqlSource):
             sample_size (int): optional. Percentage of the data the query will run over.
         
         Returns:
-             tuple(productid, asin, num_orders, avgrating, category, days_on_sale): productid is 
-             the products unqiue identifier. asin is the identification of the book. num_orders 
-             counts the number of times the book has been purchased. avgrating is the average star 
-             rating of the book based on the user reviews. category is the product category that the 
-             book belongs to. days_on_sale is the number of days the book has been on sale.
+           QueryResponse:
+               columns (:obj:`list` of :obj:`str`): ['productid', 'asin', 'num_orders', 'avgrating', 'category', 'days_on_sale']
+
+               results (:obj:`list` of :obj:`tuple(int,str,int,float,int,int)`)
+
+                productid is the products unqiue identifier. asin is the identification of the book. num_orders
+                counts the number of times the book has been purchased. avgrating is the average star
+                rating of the book based on the user reviews. category is the product category that the
+                book belongs to. days_on_sale is the number of days the book has been on sale.
         """
 
         max_date_filter = ' AND o.orderdate <= %(max_date)s' if max_date else ' '
@@ -333,9 +367,21 @@ class Products(SqlSource):
 
     @log
     def byCategory(self, nodeid):
+        """Retrieve products by category
+
+        Args:
+            nodeid (int): category nodeid to search for
+
+        Returns:
+           QueryResponse:
+               columns (:obj:`list` of :obj:`str`): ['productid']
+
+               results (:obj:`list` of :obj:`tuple(int)`)
+        """
         nodeid_filter = (' WHERE nodeid in %(nodeid)s '
             if type(nodeid) is list
             else ' WHERE nodeid = %(nodeid)s ')
+
         return self._execSqlQuery('''
             SELECT productid
             FROM products'''
@@ -354,30 +400,41 @@ class Products(SqlSource):
                             'spring_sales',
                             'summer_sales',
                             'fall_sales',
-                            'winter_sales'
+                            'winter_sales',
+                            'one_star_votes',
+                            'two_star_votes',
+                            'three_star_votes',
+                            'four_star_votes',
+                            'five_star_votes',
                         ],
                         random_state=None,
                         asin=None,
                         scale=False,
-                        PCA=False,
-                        n_components=8):
+                        n_components=13):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
         results as the features (num_orders, avgrating, category, and days_on_sale).
 
         Args: 
             num_clusters (int): optional. default=8 The number of clusters to form as well as 
-            the number of centroids to generate.
+                the number of centroids to generate.
             algorithm (string): optional. “auto”, “full” or “elkan”, default=”auto”. K-means algorithm 
-            to use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient
-            by using the triangle inequality, but currently doesn’t support sparse data. “auto” chooses
-            “elkan” for dense data and “full” for sparse data.
+                to use. The classical EM-style algorithm is “full”. The “elkan” variation is more efficient
+                by using the triangle inequality, but currently doesn’t support sparse data. “auto” chooses
+                “elkan” for dense data and “full” for sparse data.
             random_state (int): optional. int used to genderate random number.
             asin (tuple(string)): optional. asins will be the centers of the kmeans clustering.
+            n_components (int): optional. default =13. will be used to determine if PCA will be used. 
+            If n_components < len(cluster_on), PCA will be used to reduce the dim to n_components
         
         Returns:
-             tuple(productid, asin, y_pred): productid is the products unqiue identifier. asin is the
-             identification of the book. y_pred is the label of the clsuter that the product belongs to.
-        """
+           QueryResponse:
+               columns (:obj:`list` of :obj:`str`): ['productid', 'asin', 'y_pred']
+
+               results (:obj:`list` of :obj:`tuple(int, str, int)`)
+
+                productid is the products unqiue identifier. asin is the
+                identification of the book. y_pred is the label of the clsuter that the product belongs to.
+                    """
         if feature_set is None:
             feature_set = self.statsByProduct()
         if (not hasattr(feature_set, 'results')) | (not hasattr(feature_set, 'columns')):
@@ -417,7 +474,14 @@ class Products(SqlSource):
                 else StandardScaler().fit_transform(data[cluster_on].values)
             )
 
-        clustering = pd.DataFrame(X, columns=cluster_on)
+        if n_components < len(cluster_on):
+            pca=PCA(n_components=n_components)
+            X=pca.fit_transform(X)
+            
+            clustering=pd.DataFrame(X, columns=range(n_components))
+        
+        else:
+            clustering = pd.DataFrame(X, columns=cluster_on)
 
         algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers, 
                          random_state=random_state)
