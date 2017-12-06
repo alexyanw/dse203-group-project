@@ -4,33 +4,61 @@ from utils import *
 
 class Writeback:
     schema = {
-            'cooccurrencecache': [
-                ('asin_purchased', 'varchar(128)'),
-                ('asin_together', 'varchar(128)'),
-                ('metric', 'varchar(128)'),
-                ('catlvl1', 'varchar(128)'),
-                ('catlvl2', 'varchar(128)'),
-                ('catlvl3', 'varchar(128)'),
-                ('catlvl4', 'varchar(128)'),
-                ('catlvl5', 'varchar(128)'),
-                ('season1', 'varchar(128)'),
-                ('season2', 'varchar(128)'),
-                ('season3', 'varchar(128)'),
-                ('season4', 'varchar(128)'),
-                ('price_asin_together', 'int'),
-                ('demographic_region', 'int'),
-                ('demographic_gender', 'varchar(64)'),
-                ],
+           #'cooccurrencecache': [
+           #    ('asin_purchased', 'varchar(128)'),
+           #    ('asin_together', 'varchar(128)'),
+           #    ('metric', 'varchar(128)'),
+           #    ('catlvl1', 'varchar(128)'),
+           #    ('catlvl2', 'varchar(128)'),
+           #    ('catlvl3', 'varchar(128)'),
+           #    ('catlvl4', 'varchar(128)'),
+           #    ('catlvl5', 'varchar(128)'),
+           #    ('season1', 'varchar(128)'),
+           #    ('season2', 'varchar(128)'),
+           #    ('season3', 'varchar(128)'),
+           #    ('season4', 'varchar(128)'),
+           #    ('price_asin_together', 'int'),
+           #    ('demographic_region', 'int'),
+           #    ('demographic_gender', 'varchar(64)'),
+           #    ],
             'recommendationcolaborative': [
                 ('productid', 'integer'),
                 ('category', 'varchar(128)'),
                 ('rank', 'integer')
                 ],
-            'recommendationcontent': [
-                ('productid', 'integer'),
-                ('category', 'varchar(128)'),
-                ('rank', 'integer')
-                ],
+            'content_based': [
+                ('asin', 'varchar(16)'),
+                ('rating', 'numeric'),
+                ('spring', 'numeric'),
+                ('summer', 'numeric'),
+                ('winter', 'numeric'),
+                ('fall', 'numeric'),
+                ('fullprice', 'money'),
+                ('isinstock', 'int'),
+                ('lvl1', 'int'),
+                ('lvl2', 'int'),
+                ('lvl3', 'int'),
+                ('lvl4', 'int'),
+                ('lvl5', 'int')
+		],
+            'cooccurrence': [
+		('asin', 'varchar(16)'),
+		('asin_other', 'varchar(15)'),
+		('metric', 'numeric'),
+		('spring', 'numeric'),
+		('summer', 'numeric'),
+		('winter', 'numeric'),
+		('fall', 'numeric'),
+		('fullprice', 'money'),
+		('isinstock', 'int'),
+		('lvl1', 'int'),
+		('lvl2', 'int'),
+		('lvl3', 'int'),
+		('lvl4', 'int'),
+		('lvl5', 'int'),
+		('demo_region', 'int'),
+		('demo_gender', 'int'),
+		]
             }
 
     def __init__(self, engine):
