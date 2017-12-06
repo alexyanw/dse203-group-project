@@ -1,3 +1,4 @@
+import logging, pprint
 import pandas as pd
 from urllib import parse, request
 from json import loads
@@ -6,6 +7,8 @@ from category import Category
 from source_schema import SourceTable
 
 __all__ = ['AsterixEngine']
+
+logger = logging.getLogger('qe.AsterixEngine')
 
 class QueryResponse:
     def __init__(self, raw_response):
@@ -24,13 +27,13 @@ class AsterixEngine:
         self._dataverse = cfg.get('dataverse', 'bookstore_pr')
         self.dburl = 'http://' + self._server + ':' + str(self._port) + '/query/service'
         self.schema_wrapper = {
-            'CategoryLevel': Category,
-            'CategoryFlat': Category,
+            'categorylevel': Category,
+            'categoryflat': Category,
             'ClassificationInfo': SourceTable,
             #'Reviews': Reviews,
         }
         self.special_handler = {
-            'CategoryFlat.category': Category.handleCategoryFlatCategory,
+            'categoryflat.category': Category.handleCategoryFlatCategory,
         }
 
     def execute(self, statement, **kwargs):
@@ -62,7 +65,13 @@ class AsterixEngine:
         if views:
             sqlppcmd = "use {};\nWITH {}\n{}".format(self._dataverse, ",\n".join(views), sqlppcmd)
 
-        results = self.execute(sqlppcmd, **kwargs)
-        if 'debug' in kwargs: return results
-        return pd.DataFrame(results)
+        logger.info("query sql++ cmd:\n{}\n".format(sqlppcmd))
+        result = self.execute(sqlppcmd, **kwargs)
+        if 'debug' in kwargs: return result
+
+        ret_cols = [d['column'] for d in datalog['return']]
+        df_result = pd.DataFrame(result)
+        df_result = df_result[ret_cols]
+        logger.debug("query sample result:\n{}\n".format(pprint.pformat(df_result[:5])))
+        return df_result
 

@@ -6,28 +6,44 @@ class SQLBuilder:
         self.datalog = q
         self.schema = schema
 
-    def getColumnName(self, table, col_or_val, full=True):
+    def getColumnName(self, table, col_or_val, **kwargs):
+        if kwargs.get('schema', None):
+            return self.getViewColumn(table, kwargs['schema'], col_or_val, kwargs.get('full', True))
         if not self.schema:
             return col_or_val
         if col_or_val not in self.datalog['column_idx'][table]:
             return col_or_val
         col_idx = self.datalog['column_idx'][table][col_or_val]
-        if full:
+        if kwargs.get('full', True):
             return table + '.' + self.schema[table].getColumn(table, col_idx)
         else:
             return self.schema[table].getColumn(table, col_idx)
 
-    def getReturnColumns(self):
+    def getViewColumn(self, table, schema, col_or_val, full=True):
+        if col_or_val not in schema:
+            return col_or_val
+        col_idx = self.datalog['column_idx'][table][col_or_val]
+        if full:
+            return table + '.' + schema[col_idx]
+        else:
+            return schema[col_idx]
+
+    def getReturnColumns(self, datalogview=None):
         return_columns = []
         for struct in self.datalog['return']:
-            src_col = self.getColumnName(struct['table'], struct['column'], False)
-            str_ret_col = struct['table'] + '.' + src_col 
+            table,column = struct['table'], struct['column']
+            src_col = None
+            schema = None
+            if datalogview and table in datalogview['schema']:
+                schema = datalogview['schema'][table]
+            src_col = self.getColumnName(table, column, full=False, schema=schema)
+            str_ret_col = table + '.' + src_col 
             if struct['func']:
                 str_ret_col = struct['func'] + '(' + str_ret_col + ')'
             if struct['alias']:
                 str_ret_col += ' as ' + struct['alias'] 
-            elif src_col != struct['column']:
-                str_ret_col += ' as ' + struct['column'] 
+            elif src_col != column:
+                str_ret_col += ' as ' + column 
             return_columns.append(str_ret_col)
         return ', '.join(return_columns)
 
@@ -55,8 +71,8 @@ class SQLBuilder:
                 arith_conds.append("{} {} {}".format(lop, op, rop))
         return arith_conds
 
-    def getQueryCmd(self):
-        dbcmd = "SELECT " + self.getReturnColumns() + \
+    def getQueryCmd(self, datalogview=None):
+        dbcmd = "SELECT " + self.getReturnColumns(datalogview) + \
                "\nFROM " + ', '.join(self.datalog['tables'])
         conditions = []
         join_cond = self.getJoinConditions()
@@ -65,7 +81,12 @@ class SQLBuilder:
         if conditions:
             dbcmd += "\nWHERE " + ' AND '.join(conditions)
         if self.datalog['groupby']:
-            dbcmd += "\nGROUP BY {} ".format(self.getColumnName(self.datalog['groupby']['table'], self.datalog['groupby']['column'])) 
+            grouptable = self.datalog['groupby']['table']
+            groupcolumn = self.datalog['groupby']['column']
+            schema = None
+            if datalogview and grouptable in datalogview['schema']:
+                schema = datalogview['schema'][grouptable]
+            dbcmd += "\nGROUP BY {} ".format(self.getColumnName(grouptable, groupcolumn, schema=schema))
         if self.datalog['orderby']:
             dbcmd += "\nORDER BY {} ".format(self.datalog['orderby']) 
         if self.datalog['limit']:
