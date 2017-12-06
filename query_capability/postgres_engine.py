@@ -1,4 +1,5 @@
 import pandas as pd
+import logging, pprint
 from sql_builder import SQLBuilder
 from source_schema import SourceTable
 from writeback import Writeback
@@ -9,8 +10,9 @@ from sqlalchemy import create_engine,Table,MetaData
 from sqlalchemy.sql import text
 from utils import *
 
-
 __all__ = ['PostgresEngine']
+
+logger = logging.getLogger('qe.PostgresEngine')
 
 class PostgresEngine:
     def __init__(self, cfg={}):
@@ -44,20 +46,33 @@ class PostgresEngine:
             return cmd
         self.pg_conn = create_engine(self.dburl)
         df = pd.read_sql_query(cmd, self.pg_conn)
+        logger.debug("query sample result:\n{}\n".format(pprint.pformat(df[:5])))
         return df
 
     def query(self, datalog, **kwargs):
         views = []
+        view_queries = []
+        if 'view' in datalog and datalog['view']:
+            view_queries.append(datalog['view']['query'])
+            views += list(datalog['view']['schema'].keys())
+
         builder = SQLBuilder(datalog, self.schema_wrapper)
         for table in datalog['tables']:
+            if table in views: continue
             if self.schema_wrapper[table] in [SourceTable, Writeback]: continue
             wrapper_class = self.schema_wrapper[table]
-            views += wrapper_class().get_views(table=table, view=True,**kwargs)
-        sqlcmd = builder.getQueryCmd()
+            view_queries += wrapper_class().get_views(table=table, view=True, **kwargs)
+        sqlcmd = builder.getQueryCmd(datalog['view'])
 
-        if views:
-            sqlcmd = "WITH {}\n{}".format(",\n".join(views), sqlcmd)
+        if 'returnview' in kwargs:
+            sqlcmd = "{} as ({})".format(kwargs['returnview'], sqlcmd)
+            sqlcmd = "{},\n{}".format(",\n".join(view_queries), sqlcmd)
+            return sqlcmd
 
+        if view_queries:
+            sqlcmd = "WITH {}\n{}".format(",\n".join(view_queries), sqlcmd)
+
+        logger.info("query sql cmd:\n{}\n".format(sqlcmd))
         return self.executeQuery(sqlcmd, **kwargs)
 
     def get_schema(self, table):
@@ -65,10 +80,23 @@ class PostgresEngine:
         result = self.execute(sqlcmd)
         schema = {}
         for row in result:
-            print(row, type(row))
             schema[row[0]] = row[1]
 
         return schema
+
+   #def get_schema(self, table):
+   #    sqlcmd = "select 1 from INFORMATION_SCHEMA.views WHERE table_name = '{}'".format(table.lower())
+   #    exists = self.execute(sqlcmd)
+   #    print("view exists")
+   #    if not exists:
+   #        sqlcmd = "select 1 from INFORMATION_SCHEMA.tables WHERE table_name = '{}'".format(table.lower())
+   #        exists = self.execute(sqlcmd)
+   #    if not exists:
+   #        fatal("table '{}' not exists in postgres".format(table))
+
+   #    sqlcmd = "select column_name, data_type from information_schema.columns where table_name = '{}'".format(table.lower())
+   #    result = self.execute(sqlcmd)
+   #    return result
 
     def create_table(self, table, schema):
         sqlcmd = "CREATE TABLE {}(\n".format(table)
@@ -92,5 +120,4 @@ class PostgresEngine:
         meta.reflect(bind=self.pg_conn)
         sqltb = meta.tables[table.lower()]
         data = list(df.T.to_dict().values())
-        print(type(data[0]), data)
         self.pg_conn.execute(sqltb.insert(), data)

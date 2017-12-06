@@ -1,10 +1,13 @@
 import sys
+import re
 from sqlalchemy import create_engine
 from functools import reduce
-import re
+import logging, pprint
 from utils import *
 
 __all__ = ['DatalogParser']
+
+logger = logging.getLogger('qe.DatalogParser')
 
 class DatalogParser:
     def __init__(self, q):
@@ -31,6 +34,8 @@ class DatalogParser:
         self.query_columns = self.getQueryColumns(self.return_columns)         #numunits, firstname, billdate
         self.orderby = q.get('orderby', None)
         self.limit = q.get('limit', None)
+
+        logger.debug("parser structure:\n{}".format(pprint.pformat(self.__dict__)))
 
     def validate(self, datalog):
         support_fields = set(['result', 'table', 'condition', 'groupby', 'orderby', 'limit'])
@@ -62,7 +67,8 @@ class DatalogParser:
 
 
     def single_source(self):
-        return True if len(self.source_tables) == 1 else False
+        if len(self.source_tables) == 1: return True
+        return False
 
     def resolveAggregation(self, groupby):
         ''' 'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},'''
@@ -71,7 +77,7 @@ class DatalogParser:
         groupkey,aggs = groupby['key'], groupby.get('aggregation', {})
         source,table = list(self.column_to_table[groupkey].items())[0]
         self.groupby = {'source': source, 'table':table, 'column': groupkey}
-        
+
         for agg in aggs:
             match = re.search("(\S+)\((\S+),(\S+)\)", re.sub("\s", '', agg))
             if match:

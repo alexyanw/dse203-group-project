@@ -22,38 +22,39 @@ NUM_RECOMMENDATIONS_C = 40
 RATIO_POPULAR_SEASON = 0.4
 
 # load in dictionary with encoded structure
-dict_hstruct = np.load('dict_dir.npy').item()
+dict_hstruct = np.load('../data/derived/dict_dir.npy', encoding = 'latin1').item()
 
 # load in category name encodings
 list_cat_names = []
-with open('cats.txt') as f:
+with open('../data/encode_mappings/cats.txt') as f:
     list_cat_names = f.readlines()
 # you may also want to remove whitespace characters like `\n` at the end of each line
 list_cat_names = [x.strip() for x in list_cat_names]
 
 # load in asin names
-list_asin_names = list(np.load('asin.npy'))
+list_asin_names = [x.decode('utf-8') for x in list(np.load('../data/extracts/asin.npy', encoding = 'latin1'))]
 
 # load in customer x purchases matrix
-matrix_cxp = np.load('cust_item_matrix.npy')
+matrix_cxp = np.load('../data/extracts/cust_item_matrix.npy', encoding = 'latin1')
 
 # load in customer x demographics matrix
-matrix_cxd = np.load('demo_matrix.npy')
+matrix_cxd = np.load('../data/extracts/demo_matrix.npy', encoding = 'latin1')
 
 # load in depth x products x category lvls matrix
-matrix_dxpxl = np.load('categories_indexed.npy')
+matrix_dxpxl = np.load('../data/extracts/categories_indexed.npy', encoding = 'latin1')
 
 # load in general co-occurrence matrix
-matrix_ccm_g = np.load('ccm_general.npy')
+matrix_ccm_g = np.load('../data/derived/ccm_general.npy', encoding = 'latin1')
 
 # load in seasons / price / instock product matrix
-matrix_season_price_instock = np.load('season_price_instock_indexed.npy')
+matrix_season_price_instock = np.load('../data/extracts/season_price_instock_indexed.npy', encoding = 'latin1')
 
 # load in content rating array
-matrix_content = np.load('rating_indexed.npy')
+matrix_content = np.load('../data/derived/rating_indexed.npy', encoding = 'latin1')
 
 # load in customer ids
-list_cust_ids = list(np.load('custids.npy'))
+list_cust_ids = [int(x) for x in list(np.load('../data/extracts/custids.npy', encoding = 'latin1'))]
+
 
 ########################
 # general functions
@@ -82,7 +83,6 @@ def header_link(list_cat,custid,arg_seasonlist,arg_price):
 
 	string_link = "<a href=\"" + list_link[0] + "\">" + list_name[0] + "</a>"
 	if list_cat[0] != NUM_GENERAL_CATEGORY:
-		#print list_cat[0]
 		for i in range(len(list_cat)):
 			string_link += " > " + "<a href=\"" + list_link[i+1] + "\">" + list_name[i+1] + "</a>"
 	return string_link
@@ -122,7 +122,6 @@ def sidebar_links(list_cat,custid,arg_seasonlist,arg_price):
 		for i, cat in enumerate(list_side_catid):
 			list_name.append(str(list_cat_names[list_side_catid[i]]))
 
-		#print list_side_catid
 		for i in range(len(list_side_catid)):
 			string_link += "<a href=\"" + list_link[i] + "\">" + list_name[i] + "</a><br>"
 	else:
@@ -150,7 +149,7 @@ def sidebar_links(list_cat,custid,arg_seasonlist,arg_price):
 
 	## 
 	string_link += "<hr><p>Max Price</p>"
-	list_price_points = [0,25,50,100,200,400,800,1600,3200,6400]
+	list_price_points = [0,8,15,20,40]
 	for pp in list_price_points:
 
 		base_link = build_general("/testrec",custid,arg_seasonlist,pp)
@@ -185,12 +184,7 @@ def get_cat_prod(cat_list):
 			sub_dxpxl = matrix_dxpxl[lvl]
 			for l in range(len(cat_list)):
 				sub_cat_array = np.intersect1d(np.where(sub_dxpxl[:,l] == cat_list[l])[0],sub_cat_array)
-			#print sub_cat_array
 			cat_array[sub_cat_array] = 1
-	#print len(np.where(rowsum == 1)[0])
-	#print np.where(rowsum == 1)[0]
-	#print len(np.where(cat_array == 1)[0])
-	#print np.where(cat_array == 1)[0]
 	return cat_array
 
 def get_idx_from_asin(asin_list):
@@ -393,7 +387,7 @@ def get_hybridrec():
 
 	list_json = []
 	for hr in get_hybridrec:
-		list_json.append({'asin': hr})
+		list_json.append({'asin': hr.encode().decode()})
 
 	return Response(json.dumps(list_json),  mimetype='application/json')
 
@@ -455,7 +449,6 @@ def testrec():
 		for c in arg_catidlist:
 			str_collabrec += "&list_categories=" + str(c)
 		for s in arg_seasonlist:
-			print str(s)
 			str_collabrec += "&list_seasons=" + str(s)
 		if arg_price > 0:
 			 str_collabrec += "&max_price=" + str(arg_price)
@@ -471,7 +464,6 @@ def testrec():
 	for c in arg_catidlist:
 		str_contentrec += "&list_categories=" + str(c)
 	for s in arg_seasonlist:
-		print str(s)
 		str_contentrec += "&list_seasons=" + str(s)
 	if arg_price > 0:
 		 str_contentrec += "&max_price=" + str(arg_price)
@@ -487,7 +479,6 @@ def testrec():
 	for c in arg_catidlist:
 		str_hybridrec += "&list_categories=" + str(c)
 	for s in arg_seasonlist:
-		print str(s)
 		str_hybridrec += "&list_seasons=" + str(s)
 	if arg_price > 0:
 		 str_hybridrec += "&max_price=" + str(arg_price)

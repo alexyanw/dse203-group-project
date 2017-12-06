@@ -23,6 +23,8 @@ class SQLPPBuilder:
         return_columns = []
         for struct in self.datalog['return']:
             src_col = self.getColumnName(struct['table'], struct['column'], False)
+            # HACK:
+            if src_col == 'category': src_col = 'level'
             str_ret_col = struct['table'] + '.' + src_col 
             if struct['func']:
                 str_ret_col = struct['func'] + '(' + str_ret_col + ')'
@@ -48,7 +50,7 @@ class SQLPPBuilder:
         if lop in special_handler:
             return special_handler[lop](lop, relation, rop)
         else:
-            return lop + ' ' + op + ' ' + rop
+            return lop + ' ' + relation + ' ' + rop
 
     def getArithmeticConditions(self, cond_handle=None):
         arith_conds = []

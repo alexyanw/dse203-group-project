@@ -37,9 +37,6 @@ class Writeback:
         self.engine = engine
         self.batch_size = 5000
 
-    #@classmethod
-    #def get_schema(cls, table):
-
     @classmethod
     def getColumn(cls, table, idx):
         if table not in cls.schema:
