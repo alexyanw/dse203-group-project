@@ -1,16 +1,50 @@
 from hybrid_engine import HybridEngine
+import logging
 
+# single table
 datalog = [{
     'result': 'Ans(productid, fullprice)',
-    'table': ['postgres.products(productid, nodeid, fullprice, isinstock)']
+    'table': ['postgres.products(productid, _, _, _, _, fullprice, _, _)'],
+    'condition': ['fullprice > 100']
     }]
 
+# negation
+datalog1 = [{
+    'result': 'Ans(customerid, orderid, numunits, totalprice)',
+    'table': ['postgres.orders(orderid, customerid, _, _, _, _, _, _, totalprice, _, _)',
+            'postgres.customers(customerid, _, gender, firstname)',
+            'not postgres.customers(customerid, _, gender, "John")',
+            ],
+    }]
+
+# single source with original column name
+# 3 way joining and condition
 datalog1 = [{
     'result': 'Ans(customerid, productid, numunits, billdate)',
     'table': ['postgres.orders(oid, customerid, campaignId, orderDate, city, state, zipCode, paymentType, totalPrice, numOrderLines, numUnits)',
             'postgres.customers(customerid, householdId, gender, firstname)',
             'postgres.orderlines(orderLineId, oid, productId, shipDate, billdate, unitPrice, numunits, totalPrice)'],
     'condition': ['oid > 1000', 'numunits > 1']
+    }]
+
+datalog1 = [
+    {
+    'result': 'Ans(customer, order, date, numunits)',
+    'table': ['postgres.orders(order, customer, _, _, _, _, _, _, total_price, num_orderlines, _)',
+            'postgres.customers(customer, _, gender, _)',
+            'postgres.orderlines(orderLineId, order, _, _, date, _, numunits, _)',
+           ],
+    'condition': ['order > 1000', 'numunits > 1'],
+    'orderby': 'numunits DESC',
+    'limit': '10'
+    }
+]
+
+# predefined view:
+datalog1 = [{
+    'result': 'ans(pid, spring, summer, fall, winter)',
+    'table': ['postgres.seasonal_percentages(pid, spring, summer, fall, winter)'],
+    'limit': '10'
     }]
 
 # predefined views: product_view
@@ -31,17 +65,37 @@ datalog4 = [{
     'table': ['postgres.cooccurrence_matrix(product_a, product_b, pair_count)']
     }]
 
-# negation
-datalog5 = [{
-    'result': 'Ans(numunits, firstname, billdate, orderid, customerid)',
-    'table': ['postgres.orders(orderid, customerid, campaignId, orderDate, city, state, zipCode, paymentType, totalPrice, numOrderLines, numUnits)',
-            'postgres.customers(customerid, householdId, gender, firstname)',
-            'not postgres.customers(customerid, householdId, gender, "John")',
-            'postgres.orderlines(orderLineId, orderid, productId, shipDate, billdate, unitPrice, numunits, totalPrice)'],
-    }]
+# distinct - group without aggregation
+datalog1 = [
+        {
+            'result': 'Ans(asin)',
+            'table': ['postgres.orders(orderid, customerid, _, _, _, _, _, _, _, _, _)',
+            'postgres.customers(customerid, _, _, _)',
+            'postgres.orderlines(_, orderid, productid, _, _, _, _, _)',
+            'postgres.products(productid,_,_,_,_,_,asin,_)'
+                     ],
+            'condition': ['customerid=68099'],
+            'groupby': {'key':'asin'}
+        }
+    ]
 
-# join
-datalog6 = [{
+# group with aggregation
+#q(X, A) :- setof({Z}, {Y }, p(X, Y, Z), S), count(S, A)
+datalog4 = [
+    {
+    'result': 'Ans(pid, total_orders, total_value)',
+    'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
+            'postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
+            'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
+           ],
+    'condition': ['pid > 1000', "date > '2015-01-01'"],
+    'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},
+    'limit': '10'
+    }
+]
+
+# join of predefined views
+datalog1 = [{
     'result': 'Ans(product_a, product_b, pair_count)',
     'table': ['postgres.cooccurrence_matrix(product_a, product_b, pair_count)',
             'postgres.product_view(product_a, _, fullprice, _, _, _ , total_order_count , total_copy_count)'],
@@ -58,17 +112,20 @@ datalog = [{
     'condition': ['total_order_count > 1', 'fullprice < 100'],
     },
     {
-        'result': 'Ans(product_a, total_co_cocunt)',
+        'result': 'Ans(product_a, total_co_count)',
         'table': ['view.CoMat(product_a, product_b, pair_count)'],
         'groupby': {'key': 'product_a', 'aggregation': ['sum(pair_count, total_co_count)']}
         #'q(product_a, A) :- setof({pair_count}, E^b. CoMat(product_a, b, pair_count), S), sum(S, A)'
     }]
+
+# union
+
 
 engine = HybridEngine(
                 postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
                 asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
                 solr= {'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
 
-#result = engine.queryDatalog(datalog, debug=True)
-result = engine.queryDatalog(datalog)
+#result = engine.queryDatalog(datalog, debug=True, loglevel=logging.DEBUG)
+result = engine.queryDatalog(datalog, loglevel=logging.DEBUG)
 print(result)

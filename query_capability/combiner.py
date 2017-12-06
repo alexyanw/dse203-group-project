@@ -1,5 +1,8 @@
 import pandas as pd
+import logging, pprint
 from fake_db import FakeDB
+
+logger = logging.getLogger('qe.Combiner')
 
 class Combiner:
     def __init__(self, mode, prev_results, parsers):
@@ -15,9 +18,10 @@ class Combiner:
         if self.mode == 'view':
             return self.resolve_view(**kwargs)
         if self.mode == 'single_view':
-            return self.resolve_view(**kwargs)
+            return self.resolve_single_query(**kwargs)
 
     def resolve_single_query(self, **kwargs):
+        logger.info("combining result for single subquery")
         sub_results = self.source_results[0]
         parser = self.datalog_parsers[0]
         return self.combine(sub_results, parser, **kwargs)
@@ -34,6 +38,7 @@ class Combiner:
     def resolve_join(self, results, join_columns):
         ''' multi source join '''
         df_result = None
+        logger.debug("join result on:\n{}\n".format(pprint.pformat(join_columns)))
         for col,tables in join_columns.items():
             sources = set()
             for table in tables:
@@ -53,6 +58,7 @@ class Combiner:
     def resolve_aggregation(self, df_in, groupby, aggregation):
         ''' self.groupby = {'source': source, 'table':table, 'column': groupkey}
             self.aggregation[tgt_col] = (func, src_col) '''
+        logger.debug("group and aggregate result:\n{}\n{}\n".format(pprint.pformat(groupby),pprint.pformat(aggregation)))
         agg_param = {}
         rename_col = {}
         for tgt in aggregation:
@@ -69,19 +75,23 @@ class Combiner:
 
     def union(self, **kwargs):
         dfs = []
+        sizes = []
         for i in range(len(self.source_results)):
             source_result = self.source_results[i]
             parser = self.datalog_parsers[i]
             result = self.combine(source_result, parser, **kwargs)
-            if 'debug' in kwargs: print(result)
+            sizes.append(result.shape)
             dfs.append(result)
-        df_result = pd.concat(dfs)
-        return df_result.drop_duplicates()
+        union_result = pd.concat(dfs)
+        df_result = union_result.drop_duplicates()
+        logger.info("union {} dataframes with shape: {}, output shape: {}\n".format(len(sizes), sizes, df_result.shape))
+        return df_result
 
     def resolve_view(self, **kwargs):
         sub_results = self.source_results[0]
         parser = self.datalog_parsers[0]
         view_data = self.combine(sub_results, parser, **kwargs)
+        viewname = parser.return_table
 
         parser = self.datalog_parsers[1]
         source = 'view'
@@ -97,5 +107,6 @@ class Combiner:
             'limit': parser.limit
             }
 
+        logger.info("query against view '{}' in memory with dataframes\n".format(viewname))
         db = FakeDB({parser.return_table: view_data})
         return db.query(query_struct, **kwargs)

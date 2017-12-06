@@ -1,4 +1,4 @@
-1. Please make sure the following files are in this directory, which can be gotten from ../data
+1. Please make sure the following files are in the ../data (some need to be unzipped)
 
 * categories_indexed.npy - for looking up categories for products
 * cats.txt - category name lookup
@@ -8,7 +8,7 @@
 * dict_dir.npy - categories directory structure
 * asin.npy - asin lookup
 * season_price_instock_indexed.npy - asin x (season, price, instock) matrix
-# asin_rating.npy - content recommendations
+# rating_indexed.npy - content recommendations
 * custids.npy - customer lookup
 
 2. Make sure flask is installed

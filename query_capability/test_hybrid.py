@@ -1,59 +1,20 @@
 from hybrid_engine import HybridEngine
+import logging
 
-# single source with original column name
-datalog1 = [
-    {
-    'result': 'Ans(numunits, firstname, billdate, orderid, customerid)',
-    'table': ['postgres.orders(orderid, customerid, campaignId, orderDate, city, state, zipCode, paymentType, totalPrice, numOrderLines, _)',
-            'postgres.customers(customerid, householdId, gender, firstname)',
-            'postgres.orderlines(orderLineId, orderid, productId, shipDate, billdate, unitPrice, numunits, _)',
-           ],
-    'condition': ['orderid > 1000', 'numunits > 1'],
-    'orderby': 'numunits DESC',
-    'limit': '10'
-    }
-]
-
-# single source with column renaming
-datalog2 = [
-    {
-    'result': 'Ans(nunits, fname, date, oid, customerid)',
-    'table': ['postgres.orders(oid, customerid, _, _, _, _, _, _, _, _, _)',
-            'postgres.customers(customerid, _, _, fname)',
-            'postgres.orderlines(olid, oid, _, _, date, _, nunits, _)',
-           ],
-    'condition': ['oid > 1000', 'nunits > 1'],
-    'limit': '10'
-    }
-]
 # multi source join
-datalog3 = [
+datalog = [
     {
     'result': 'Ans(pid, nunits, date, asin, nodeid)',
     'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
             'postgres.orderlines(olid, oid, pid, _, date, _, nunits, _)',
             'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
-            'asterix.CategoryFlat(nodeid, category)',
+            'asterix.categoryflat(nodeid, category)',
            ],
     'condition': ['pid > 1000', "date > '2015-01-01'", "category = 'Education;Children & Teens'"],
     'limit': '10'
     }
 ]
 
-# single source aggregation
-#q(X, A) :- setof({Z}, {Y }, p(X, Y, Z), S), count(S, A)
-datalog4 = [
-    {
-    'result': 'Ans(pid, total_orders, total_value)',
-    'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
-            'postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
-            'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
-           ],
-    'condition': ['pid > 1000', "date > '2015-01-01'"],
-    'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},
-    'limit': '10'
-    }
-]
 
 # multi source aggregation
 datalog5 = [
@@ -62,7 +23,7 @@ datalog5 = [
     'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
             'postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
             'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
-            'asterix.CategoryLevel(nodeid, lvl1, _, _, _, _)',
+            'asterix.categorylevel(nodeid, lvl1, _, _, _, _)',
            ],
     'condition': ['pid < 10100', "date > '2015-01-01'"],
     'groupby': { 'key': 'lvl1', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},
@@ -71,7 +32,7 @@ datalog5 = [
 ]
 
 # union of single source
-datalog6 = [
+datalog = [
     {
     'result': 'Ans(pid, asin, total_value)',
     'table': ['postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
@@ -92,13 +53,13 @@ datalog6 = [
 
 
 # union of multi source & aggregation
-datalog7 = [
+datalog = [
     {
     'result': 'Ans(lvl1, total_orders, total_value)',
     'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
             'postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
             'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
-            'asterix.CategoryLevel(nodeid, lvl1, _, _, _, _)',
+            'asterix.categorylevel(nodeid, lvl1, _, _, _, _)',
            ],
     'condition': ['pid < 10100', "date > '2015-01-01'"],
     'groupby': { 'key': 'lvl1', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},
@@ -108,7 +69,7 @@ datalog7 = [
     'table': ['postgres.orders(oid, _, _, _, _, _, _, _, _, _, _)',
             'postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
             'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
-            'asterix.CategoryLevel(nodeid, lvl1, _, _, _, _)',
+            'asterix.categorylevel(nodeid, lvl1, _, _, _, _)',
            ],
     'condition': ['pid > 10050', 'pid < 10200', "date > '2015-01-01'"],
     'groupby': { 'key': 'lvl1', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},
@@ -116,12 +77,12 @@ datalog7 = [
 ]
 
 # view resolved in combiner
-datalog8 = [
+datalog = [
     {
     'result': 'temp(pid, cat, nunits, price)',
     'table': ['postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
             'postgres.products(pid, _, _, _, _, _, asin, nodeid)',
-            'asterix.CategoryLevel(nodeid, cat, _, _, _, _)',
+            'asterix.categorylevel(nodeid, cat, _, _, _, _)',
            ],
     'condition': ['pid < 10100', "date > '2015-01-01'"],
     },
@@ -134,23 +95,13 @@ datalog8 = [
     }
 ]
 
-# distinct = group by without aggregation
-datalog = [
-    {
-    'result': 'Ans(pid)',
-    'table': ['postgres.orderlines(olid, oid, pid, _, date, _, nunits, price)',
-           ],
-    'groupby': { 'key': 'pid'},
-    'limit': '10'
-    }
-]
-
 # using local server, everything default
 #engine = HybridEngine()
 engine = HybridEngine(
                 postgres= {'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres', 'password': 'pavan007'},
                 asterix= {'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
                 solr= {'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
-result = engine.queryDatalog(datalog, debug=True)
-#result = engine.queryDatalog(datalog)
+#result = engine.queryDatalog(datalog, debug=True)
+#result = engine.queryDatalog(datalog, loglevel=logging.DEBUG)
+result = engine.queryDatalog(datalog, loglevel=logging.DEBUG)
 print(result)

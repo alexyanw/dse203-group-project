@@ -430,4 +430,10 @@ define_mapping("reviewFeatures_view(reviewid, asin, rating, votesforreview, outo
 
 define_mapping("regions_map_view(customerid, region, gender) -> postgres.regions_map()")
 
+# 'CategoryLevel': ['nodeid', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5'],
+# 'CategoryFlat': ['nodeid', 'category'],
+
+define_mapping("CategoryLevel_view(nodeid, level_1, level_2, level_3, level_4, level_5) -> asterix.CategoryLevel(nodeid, level_1, level_2, level_3, level_4, level_5)")
+define_mapping("CategoryFlat_view(nodeid, category) -> asterix.CategoryFlat(nodeid, category)")
+
 pickle.dump( gsm, open( "global_schema_mappings.pkl", "wb" ) )

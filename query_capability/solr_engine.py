@@ -1,4 +1,5 @@
 import re
+import logging, pprint
 from urllib import parse, request
 import pandas as pd
 import pysolr
@@ -7,6 +8,8 @@ from solrurl_builder import SolrUrlBuilder
 from review_text import ReviewText
 
 __all__ = ['SolrEngine']
+
+logger = logging.getLogger('qe.SolrEngine')
 
 class SolrResponse:
     def __init__(self, raw_response):

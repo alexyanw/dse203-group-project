@@ -1,4 +1,6 @@
 import pandas as pd
+import logging, pprint
+logger = logging.getLogger('qe.FakeDB')
 
 class FakeDB:
     ''' process dataframes in memory '''
@@ -21,6 +23,7 @@ class FakeDB:
 
     def filter_by_condition(self, df_in, conditions):
         if not conditions: return df_in
+        logger.debug("in memory condition filtering:\n{}\n".format(pprint.pformat(conditions)))
         df_results = df_in
         for cond in conditions:
             col,op,value = cond
@@ -37,6 +40,7 @@ class FakeDB:
     def resolve_aggregation(self, df_in, groupby, aggregation):
         ''' self.groupby = {'source': source, 'table':table, 'column': groupkey}
             self.aggregation[tgt_col] = (func, src_col) '''
+        logger.debug("in memory group and aggregation:\n{}\n{}\n".format(pprint.pformat(groupby),pprint.pformat(aggregation)))
         agg_param = {}
         rename_col = {}
         
@@ -53,6 +57,7 @@ class FakeDB:
         return df_result.rename(columns=rename_col)
 
     def resolve_join(self, results, join_columns):
+        logger.debug("in memory join:\n{}\n".format(pprint.pformat(join_columns)))
         if len(results) == 1:
             first = next(iter(results))
             return results[first]
