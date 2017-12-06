@@ -909,4 +909,9 @@ CREATE TABLE postgres.regions_map (
    gender
 );
 
+
+CREATE TABLE asterix.CategoryLevel(nodeid, level_1, level_2, level_3, level_4, level_5);
+
+CREATE TABLE asterix.CategoryFlat(nodeid, category);
+
 --postgres;

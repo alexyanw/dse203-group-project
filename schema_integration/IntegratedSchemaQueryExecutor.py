@@ -51,10 +51,10 @@ def execute(query,condition=None,limit=None,debug=False,just_debug=False):
         print_qpe_dict_list(qpe_dict_list)
 
     engine = HybridEngine(
-        postgres={'server': 'localhost', 'port': 5432, 'database': 'SQLBook', 'user': 'postgres',
-                  'password': 'pavan007'},
-        asterix={'server': 'localhost', 'port': 19002, 'dataverse': 'TinySocial'},
-        solr={'server': 'localhost', 'port': 8983, 'core': 'bookstore'})
+        postgres={'server': '132.249.238.27', 'port': 5432, 'database': 'bookstore_pr', 'user': 'student',
+                  'password': '123456'},
+        asterix={'server': '132.249.238.32', 'port': 19002, 'dataverse': 'bookstore_pr'},
+        solr={'server': '132.249.238.28', 'port': 8983, 'core': 'bookstore_pr'})
     qpe_dict_list=[qpe_dl]
     print(qpe_dl['table'])
 
