@@ -27,6 +27,6 @@ result = ISQE.execute('ans(rid,summary)->reviewFeatures_view(rid, asin, rating, 
 
 # result = ISQE.execute('ans(asin)->cust_prod(cid,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,asin,_)',['cid=68099'])
 
-#result = ISQE.execute('ans(nodeid, cat)->CategoryFlat_view(nodeid,cat)', ["cat = 'Education;Children & Teens'"], debug=True)
+result = ISQE.execute('ans(nodeid, cat)->CategoryFlat_view(nodeid,cat)', ["cat = 'Education;Children & Teens'"], debug=True)
 
 print(result)
