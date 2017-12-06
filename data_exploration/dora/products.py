@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import numpy as np
+from sklearn.decomposition import PCA
 
 
 class Products(SqlSource):
@@ -354,13 +355,17 @@ class Products(SqlSource):
                             'spring_sales',
                             'summer_sales',
                             'fall_sales',
-                            'winter_sales'
+                            'winter_sales',
+                            'one_star_votes',
+                            'two_star_votes',
+                            'three_star_votes',
+                            'four_star_votes',
+                            'five_star_votes',
                         ],
                         random_state=None,
                         asin=None,
                         scale=False,
-                        PCA=False,
-                        n_components=8):
+                        n_components=13):
         """Clusters the books together using KMeans clustering utilizing the clusterQuery 
         results as the features (num_orders, avgrating, category, and days_on_sale).
 
@@ -373,6 +378,8 @@ class Products(SqlSource):
             “elkan” for dense data and “full” for sparse data.
             random_state (int): optional. int used to genderate random number.
             asin (tuple(string)): optional. asins will be the centers of the kmeans clustering.
+            n_components (int): optional. default =13. will be used to determine if PCA will be used. 
+            If n_components < len(cluster_on), PCA will be used to reduce the dim to n_components
         
         Returns:
              tuple(productid, asin, y_pred): productid is the products unqiue identifier. asin is the
@@ -417,7 +424,14 @@ class Products(SqlSource):
                 else StandardScaler().fit_transform(data[cluster_on].values)
             )
 
-        clustering = pd.DataFrame(X, columns=cluster_on)
+        if n_components < len(cluster_on):
+            pca=PCA(n_components=n_components)
+            X=pca.fit_transform(X)
+            
+            clustering=pd.DataFrame(X, columns=range(n_components))
+        
+        else:
+            clustering = pd.DataFrame(X, columns=cluster_on)
 
         algorithm=KMeans(n_clusters=(n_clusters), algorithm=(algorithm),init=input_centers, 
                          random_state=random_state)
