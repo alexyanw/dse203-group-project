@@ -13,7 +13,7 @@ from .vis import QueryVis
 class QueryResponse(object):
     """Main response object for API queries"""
     def __init__(self, columns, results):
-        self.vis = QueryVis(columns, results)
+        self._vis = QueryVis(columns, results)
         self.columns = columns
         self.results = results
         self.is_cached = False
@@ -28,24 +28,9 @@ class QueryResponse(object):
         })
 
     @property
-    def columns(self):
-        """list of columns included in query response"""
-        return self.columns
-
-    @property
-    def results(self):
-        """list of tuples containing response data"""
-        return self.results
-
-    @property
-    def is_cached(self):
-        """boolean indiciating if results came from local cache"""
-        return self.is_cached
-
-    @property
     def vis(self):
         """QueryVis object for visualization convenience"""
-        return self.vis
+        return self._vis
 
     def to_csv(self, path):
         """convert response results to a csv with header, saved to path"""
