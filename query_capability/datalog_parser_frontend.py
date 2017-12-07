@@ -21,9 +21,11 @@ class DatalogParserFE:
     def breakquery(self, datalog):
         subqueries = []
         fmtdl = re.sub("<-", "<-\n", datalog)
-       #fmtdl = re.sub("\)\s*,", "),\n", fmtdl)
-        breakset = fmtdl.index('setof')
-        fmtdl = re.sub("\)\s*,", ")\n", fmtdl[:breakset]) + fmtdl[breakset:]
+        if re.search('setof', fmtdl):
+            breakset = fmtdl.index('setof')
+            fmtdl = re.sub("\)\s*,", ")\n", fmtdl[:breakset]) + fmtdl[breakset:]
+        else:
+            fmtdl = re.sub("\)\s*,", "),\n", fmtdl)
         idx = 0
         for stmt in fmtdl.split('\n'):
             stmt = re.sub("^\s+", '', stmt)
