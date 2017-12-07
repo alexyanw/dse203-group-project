@@ -36,180 +36,119 @@ create external dataset NumericClassificationInfo(numericClassificationInfoType)
     (("path"="localhost:///home/j/Documents/Laboratory/DSE203/Data/spreadsheetJSONnumeric.json"),
     ("format"="json"));
 
-Numeric Dataset Query
+Numeric Dataset SQL++ Query FLATTENED
 USE TinySocial;
-SELECT nodeID, 
-       (SELECT gp.cat.category.nested.level_1, 
-               gp.cat.category.nested.nested.level_2, 
-               gp.cat.category.nested.nested.nested.level_3, 
-               gp.cat.category.nested.nested.nested.nested.level_4, 
-               gp.cat.category.nested.nested.nested.nested.nested.level_5 
-        FROM gp) AS categories
-FROM NumericClassificationInfo c
-GROUP BY c.nodeID AS nodeID
-GROUP AS gp(c as cat);
+SELECT c.nodeID, c.category.nested.level_1, 
+       c.category.nested.nested.level_2, c.category.nested.nested.nested.level_3, 
+       c.category.nested.nested.nested.nested.level_4, c.category.nested.nested.nested.nested.nested.level_5 
+FROM NumericClassificationInfo c;
 
 Query Result
 {
-    nodeID: 1005,
-    categories: [
-        {
-            level_1: 247,
-            level_2: 223,
-            level_3: 1582,
-            level_4: 0,
-            level_5: 0
-        }
-    ]
+    nodeID: 882340,
+    level_1: 247,
+    level_2: 223,
+    level_3: 504,
+    level_4: 3125,
+    level_5: 0
 }
 {
-
     nodeID: 1007,
-    categories: [
-        {
-            level_1: 247,
-            level_2: 223,
-            level_3: 504,
-            level_4: 3145,
-            level_5: 0
-        },
-        {
-            level_1: 919,
-            level_2: 1793,
-            level_3: 3146,
-            level_4: 0,
-            level_5: 0
-        }
-    ]
+    level_1: 247,
+    level_2: 223,
+    level_3: 504,
+    level_4: 3145,
+    level_5: 0
 }
 {
-    nodeID: 1019,
-    categories: [
-        {
-            level_1: 247,
-            level_2: 223,
-            level_3: 1883,
-            level_4: 1582,
-            level_5: 0
-        }
-    ]
+    nodeID: 1002,
+    level_1: 247,
+    level_2: 223,
+    level_3: 936,
+    level_4: 0,
+    level_5: 0
 }
      ⁞
-6384 rows
+8121 rows
 
-Text Dataset Query
+Text Dataset SQL++ Query FLATTENED
 USE TinySocial;
-SELECT nodeID, 
-       (SELECT gp.cat.category.nested.level_1, 
-               gp.cat.category.nested.nested.level_2, 
-               gp.cat.category.nested.nested.nested.level_3, 
-               gp.cat.category.nested.nested.nested.nested.level_4, 
-               gp.cat.category.nested.nested.nested.nested.nested.level_5 
-        FROM gp) AS categories
-FROM ClassificationInfo c
-GROUP BY c.nodeID AS nodeID
-GROUP AS gp(c as cat);
+SELECT c.nodeID, c.category.nested.level_1, 
+       c.category.nested.nested.level_2, c.category.nested.nested.nested.level_3, 
+       c.category.nested.nested.nested.nested.level_4, c.category.nested.nested.nested.nested.nested.level_5 
+FROM ClassificationInfo c;
 
 Query Result
 {
-    nodeID: 1005,
-    categories: [
-        {
-            level_1: "Arts & Photography",
-            level_2: "Architecture",
-            level_3: "General",
-            level_4: "N/A",
-            level_5: "N/A"
-        }
-    ]
+    nodeID: 882340,
+    level_1: "Arts & Photography",
+    level_2: "Architecture",
+    level_3: "Buildings",
+    level_4: "Religious Buildings",
+    level_5: "N/A"
 }
 {
     nodeID: 1007,
-    categories: [
-        {
-            level_1: "Arts & Photography",
-            level_2: "Architecture",
-            level_3: "Buildings",
-            level_4: "Residential",
-            level_5: "N/A"
-        },
-        {
-            level_1: "Crafts, Hobbies & Home",
-            level_2: "Home Improvement & Design",
-            level_3: "Residential Architecture",
-            level_4: "N/A",
-            level_5: "N/A"
-        }
-    ]
+    level_1: "Arts & Photography",
+    level_2: "Architecture",
+    level_3: "Buildings",
+    level_4: "Residential",
+    level_5: "N/A"
 }
 {
-    nodeID: 1019,
-    categories: [
-        {
-            level_1: "Arts & Photography",
-            level_2: "Architecture",
-            level_3: "Individual Architects & Firms",
-            level_4: "General",
-            level_5: "N/A"
-        }
-    ]
+    nodeID: 1002,
+    level_1: "Arts & Photography",
+    level_2: "Architecture",
+    level_3: "Criticism",
+    level_4: "N/A",
+    level_5: "N/A"
 }
      ⁞
-6384 rows
+8121 rows
 
 If We Want an AsterixDB "Virtual Table" for Integrated Schema, Here is How it Could Work
 Reusable user-defined functions (UDFs) are similar in nature to views in relational databases.  (AsterixDB’s AQL UDFs are essentially views with parameters.) 
 
-AQL User-Defined Function (UDF) for NUMERIC Categories
+AQL User-Defined Function (UDF) for FLATTENED NUMERIC Categories
 use dataverse TinySocial;
-create function numeric_categories()
+create function num_categories()
 {
-  for $n in dataset NumericClassificationInfo
-  let $categories := 
-    { 
-      "level_1": $n.category.nested.level_1, 
-      "level_2": $n.category.nested.nested.level_2, 
-      "level_3": $n.category.nested.nested.nested.level_3, 
-      "level_4": $n.category.nested.nested.nested.nested.level_4, 
-      "level_5": $n.category.nested.nested.nested.nested.nested.level_5 
-    }
-  group by $node := $n.nodeID with $categories
-  return
-    {
-      "nodeID": $node,
-      "categories": $categories
-    }
+for $n in dataset NumericClassificationInfo
+return
+  {
+    "nodeID": $n.nodeID,
+    "level_1": $n.category.nested.level_1, 
+    "level_2": $n.category.nested.nested.level_2, 
+    "level_3": $n.category.nested.nested.nested.level_3, 
+    "level_4": $n.category.nested.nested.nested.nested.level_4, 
+    "level_5": $n.category.nested.nested.nested.nested.nested.level_5 
+  }
 };
 
-AQL Query Using UDF for NUMERIC Categories
+AQL Query Using UDF for FLATTENED NUMERIC Categories
 use dataverse TinySocial;
-for $nid in numeric_categories()
+for $nid in num_categories()
 return $nid;
 
-AQL UDF for TEXT Categories
+AQL UDF for FLATTENED TEXT Categories
 use dataverse TinySocial;
-create function text_categories()
+create function txt_categories()
 {
-  for $n in dataset ClassificationInfo
-  let $categories := 
-    { 
-      "level_1": $n.category.nested.level_1, 
-      "level_2": $n.category.nested.nested.level_2, 
-      "level_3": $n.category.nested.nested.nested.level_3, 
-      "level_4": $n.category.nested.nested.nested.nested.level_4, 
-      "level_5": $n.category.nested.nested.nested.nested.nested.level_5 
-    }
-  group by $node := $n.nodeID with $categories
-  return
-    {
-      "nodeID": $node,
-      "categories": $categories
-    }
+for $n in dataset ClassificationInfo
+return
+  {
+    "nodeID": $n.nodeID,
+    "level_1": $n.category.nested.level_1, 
+    "level_2": $n.category.nested.nested.level_2, 
+    "level_3": $n.category.nested.nested.nested.level_3, 
+    "level_4": $n.category.nested.nested.nested.nested.level_4, 
+    "level_5": $n.category.nested.nested.nested.nested.nested.level_5 
+  }
 };
 
-AQL Query Using UDF for TEXT Categories
+AQL Query Using UDF for FLATTENED TEXT Categories
 use dataverse TinySocial;
-for $nid in text_categories()
+for $nid in txt_categories()
 return $nid;
 
 

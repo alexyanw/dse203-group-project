@@ -12,8 +12,9 @@ app = Flask(__name__)
 # What mapping represent general category
 NUM_GENERAL_CATEGORY = 0
 
-# Number of recommendaions to provide in testrec page
+# Number of recommendaions to provide in testrec page with correct mixture of collab and content
 NUM_RECOMMENDATIONS = 10
+NUM_RECOMMENDATIONS_MIX = [0.9,0.1]
 
 # Number of recommendaions to randomize from in content filtering
 NUM_RECOMMENDATIONS_C = 40
@@ -38,13 +39,19 @@ list_asin_names = [x.decode('utf-8') for x in list(np.load('../data/extracts/asi
 matrix_cxp = np.load('../data/extracts/cust_item_matrix.npy', encoding = 'latin1')
 
 # load in customer x demographics matrix
-matrix_cxd = np.load('../data/extracts/demo_matrix.npy', encoding = 'latin1')
+matrix_cxd = np.load('../data/extracts/demo_matrix_c1.npy', encoding = 'latin1')
 
 # load in depth x products x category lvls matrix
 matrix_dxpxl = np.load('../data/extracts/categories_indexed.npy', encoding = 'latin1')
 
-# load in general co-occurrence matrix
-matrix_ccm_g = np.load('../data/derived/ccm_general.npy', encoding = 'latin1')
+# load in co-occurrence matrix
+dict_ccm = {}
+CCM_IMPORTANT_CLUSTERS = [1,3,4,7]
+dict_ccm[0] = np.load('../data/derived/ccm_general.npy', encoding = 'latin1')
+dict_ccm[1] = np.load('../data/derived/cluster1_coo_matrix.npy', encoding = 'latin1')
+dict_ccm[3] = np.load('../data/derived/cluster3_coo_matrix.npy', encoding = 'latin1')
+dict_ccm[4] = np.load('../data/derived/cluster4_coo_matrix.npy', encoding = 'latin1')
+dict_ccm[7] = np.load('../data/derived/cluster7_coo_matrix.npy', encoding = 'latin1')
 
 # load in seasons / price / instock product matrix
 matrix_season_price_instock = np.load('../data/extracts/season_price_instock_indexed.npy', encoding = 'latin1')
@@ -240,11 +247,14 @@ def get_collabrec():
 	arg_season_list = request.args.getlist('list_seasons')
 	arg_price = int(request.args.get('max_price',0))
 
-	# Select corrrect matrix based on demographics, currently using general
+	# Select corrrect matrix based on demographics
+	matrix_ccm = dict_ccm[0]
+	if arg_demographic_region in CCM_IMPORTANT_CLUSTERS:
+		matrix_ccm = dict_ccm[arg_demographic_region]
 	# add up all co-occurrence rows
-	rowsum = np.zeros(matrix_ccm_g.shape[0])
+	rowsum = np.zeros(matrix_ccm.shape[0])
 	for p in get_idx_from_asin(arg_purchase_list):
-		rowsum += matrix_ccm_g[p,:]
+		rowsum += matrix_ccm[p,:]
 
 	# Remove perviously purchased
 	rowsum[get_idx_from_asin(arg_purchase_list)] = 0
@@ -289,6 +299,9 @@ def get_contentrec():
 	arg_num_rec = int(request.args.get('num_rec'))
 	arg_season_list = request.args.getlist('list_seasons')
 	arg_price = int(request.args.get('max_price',0))
+
+	# this is for the demo, so the results are consistent per customer.
+	np.random.seed(sum(list(map(int,arg_purchase_list))))
 
 	# content matrix
 	rowsum = np.copy(matrix_content)
@@ -376,14 +389,16 @@ def get_hybridrec():
 	get_contentrec = requests.get(str_contentrec).json()
 
 	# Hybrid Combiner
-	if len(arg_purchase_list) != 0:
-		for r in get_collabrec:
-			get_hybridrec.append(r['asin'])
+	for r in get_collabrec:
+		if len(get_hybridrec) >= int(arg_num_rec * NUM_RECOMMENDATIONS_MIX[0]):
+			break		
+		get_hybridrec.append(r['asin'])
 	for r in get_contentrec:
+		if len(get_hybridrec) >= int(arg_num_rec * NUM_RECOMMENDATIONS_MIX[0])+int(arg_num_rec * NUM_RECOMMENDATIONS_MIX[1]):
+			break
 		if r['asin'] not in get_hybridrec:
 			get_hybridrec.append(r['asin']) 
-		if len(get_hybridrec) >= arg_num_rec:
-			break
+
 
 	list_json = []
 	for hr in get_hybridrec:

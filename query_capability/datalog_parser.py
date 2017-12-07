@@ -35,7 +35,7 @@ class DatalogParser:
         self.orderby = q.get('orderby', None)
         self.limit = q.get('limit', None)
 
-        logger.debug("parser structure:\n{}".format(pprint.pformat(self.__dict__)))
+        logger.debug("parser structure:\n{}\n".format(pprint.pformat(self.__dict__)))
 
     def validate(self, datalog):
         support_fields = set(['result', 'table', 'condition', 'groupby', 'orderby', 'limit'])
