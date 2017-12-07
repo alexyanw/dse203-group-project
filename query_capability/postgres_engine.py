@@ -61,12 +61,14 @@ class PostgresEngine:
             if table in views: continue
             if self.schema_wrapper[table] in [SourceTable, Writeback]: continue
             wrapper_class = self.schema_wrapper[table]
+            #features = [col['column'] for col in datalog['return']]
             view_queries += wrapper_class().get_views(table=table, view=True, **kwargs)
         sqlcmd = builder.getQueryCmd(datalog['view'])
 
         if 'returnview' in kwargs:
             sqlcmd = "{} as ({})".format(kwargs['returnview'], sqlcmd)
-            sqlcmd = "{},\n{}".format(",\n".join(view_queries), sqlcmd)
+            if view_queries:
+                sqlcmd = "{},\n{}".format(",\n".join(view_queries), sqlcmd)
             return sqlcmd
 
         if view_queries:

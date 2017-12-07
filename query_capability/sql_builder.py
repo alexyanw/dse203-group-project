@@ -58,14 +58,17 @@ class SQLBuilder:
                 return_str += (base_str + self.getColumnName(table, col) + " AND ")
         return return_str[:-5]
 
-    def getArithmeticConditions(self):
+    def getArithmeticConditions(self, datalogview=None):
         arith_conds = []
         if not self.datalog['conditions']: return arith_conds
         for table,conditions in self.datalog['conditions'].items():
             if not conditions: continue
+            schema = None
+            if datalogview and table in datalogview['schema']:
+                schema = datalogview['schema'][table]
             for cond in conditions:
-                lop = self.getColumnName(table, cond[0])
-                rop = self.getColumnName(table, cond[2])
+                lop = self.getColumnName(table, cond[0], schema=schema)
+                rop = self.getColumnName(table, cond[2], schema=schema)
                 if not re.search("'.*'", rop): rop = "'"+rop+"'"
                 op = cond[1]
                 arith_conds.append("{} {} {}".format(lop, op, rop))
@@ -77,7 +80,7 @@ class SQLBuilder:
         conditions = []
         join_cond = self.getJoinConditions()
         if join_cond: conditions.append(join_cond)
-        conditions += self.getArithmeticConditions()
+        conditions += self.getArithmeticConditions(datalogview)
         if conditions:
             dbcmd += "\nWHERE " + ' AND '.join(conditions)
         if self.datalog['groupby']:

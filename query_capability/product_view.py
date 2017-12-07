@@ -83,6 +83,7 @@ GROUP BY p.productid
                     feature_map[feature] = view
                     break
 
+        #func_ptrs = [self.schema_map[feature_map[f]][0] for f in feature_map if f!='productid']
         func_ptrs = [self.schema_map[feature_map[f]][0] for f in feature_map]
         exist = {}
         view_contents = []

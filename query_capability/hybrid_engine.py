@@ -1,10 +1,11 @@
 import re
 import logging, pprint
 import pandas as pd
+from datalog_parser_frontend import DatalogParserFE
+from datalog_parser import DatalogParser
 from postgres_engine import PostgresEngine
 from asterix_engine import AsterixEngine
 from solr_engine import SolrEngine
-from datalog_parser import DatalogParser
 from combiner import Combiner
 from writeback import Writeback
 from source_schema import SourceTable
@@ -46,6 +47,11 @@ class HybridEngine:
             self.mode = 'view'
         else: # sub datalogs > 2
             fatal("Not support multi views")
+
+    def queryDatalogRaw(self, datalog, **kwargs):
+        fe = DatalogParserFE()
+        subqueries = fe.parse(datalog)
+        return self.queryDatalog(subqueries, **kwargs)
 
     def queryDatalog(self, datalog, **kwargs):
         if 'loglevel' in kwargs:
@@ -91,7 +97,7 @@ class HybridEngine:
                 'limit': parser.limit if parser.single_source() else None,
                 }
 
-            logger.debug("structed query for {}\n{}\n".format(source_engine, pprint.pformat(subquery)))
+            logger.debug("arbiter submit query to {}\n{}\n".format(source_engine, pprint.pformat(subquery)))
             results[source_engine] = self.arbiter(source_engine, subquery, **kwargs)
 
         return results
