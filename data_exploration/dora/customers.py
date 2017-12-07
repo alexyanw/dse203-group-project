@@ -260,7 +260,8 @@ class Customers(SqlSource):
                              'totalmales',
                              'totalfemales'
                          ],
-                         scale=False):
+                         scale=False,
+                        random_state=1):
         """Clusters the customers together based on cluster_on parameter.
 
         Args:
@@ -325,7 +326,8 @@ class Customers(SqlSource):
                 for x in custid_response.results
                 if x[matched_index] == clustering_row['customermatchedid']]
 
-        algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init))
+        algorithm = KMeans(n_clusters=(n_clusters), algorithm=(algorithm), init=(init),
+                           random_state=random_state)
         algorithm.fit_predict(X)
 
         for col in feature_set.columns:
