@@ -302,7 +302,7 @@ def get_contentrec():
 	arg_price = int(request.args.get('max_price',0))
 
 	# this is for the demo, so the results are consistent per customer.
-	np.random.seed(sum(list(map(int,arg_purchase_list))))
+	np.random.seed(sum(get_idx_from_asin(arg_purchase_list))+sum(arg_cat_list))
 
 	# content matrix
 	rowsum = np.copy(matrix_content)
