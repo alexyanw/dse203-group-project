@@ -15,6 +15,7 @@ class DatalogParserFE:
     def parse(self, datalog):
         subqueries = self.breakquery(datalog)
         result= [self.atomize(q) for q in subqueries]
+        result = self.merge_aggregation(result)
         #logger.info("datalog decomposed:\n{}\n".format(pprint.pformat(result)))
         return result
 
@@ -47,7 +48,8 @@ class DatalogParserFE:
         for atom in subdatalog:
             if re.search('^\s*$', atom): continue
             if re.search('<-', atom):
-                struct['result'] = re.sub('\s*<-\s*', '', atom)
+                atom = re.sub('\s+', '', atom)
+                struct['result'] = re.sub('<-', '', atom)
             elif re.search('[<=>]', atom):
                 struct['condition'] += atom.split(',')
             elif re.search('setof', atom):
@@ -90,5 +92,27 @@ class DatalogParserFE:
         groupkeys = columns - set(free_vars)
         return {'key': ','.join(groupkeys), 'aggregation': aggs, 'table': relation}
 
+    def merge_aggregation(self, subqueries):
+        result = []
+        for q in subqueries:
+            table = re.sub(".*\.", '', q['table'][0])
+            if 'groupby' not in q:
+                result.append(q)
+                continue
 
+            groupkey = q['groupby']
+            for r in result:
+                if table != r['result']: continue
+                if self.is_multi_source(r['table']):
+                    result.append(q)
+                    continue
+                r['groupby'] = groupkey
+                r['result'] = q['result']
+        return result
+
+    def is_multi_source(self,tables):
+        return False
+        sources = set([re.sub("\..*", '', t) for t in tables]) - set(['view'])
+        if len(sources) > 1: return True
+        return False
 

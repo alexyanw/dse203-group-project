@@ -39,6 +39,7 @@ class Combiner:
         ''' multi source join '''
         df_result = None
         logger.debug("join result on:\n{}\n".format(pprint.pformat(join_columns)))
+        source_done = {} 
         for col,tables in join_columns.items():
             sources = set()
             for table in tables:
@@ -46,6 +47,7 @@ class Combiner:
                 sources.add(source)
 
             for source in sources:
+                if source in source_done: continue
                 if df_result is None:
                     df_result = results[source]
                     df_result[col] = df_result[col].apply(str)
@@ -53,6 +55,7 @@ class Combiner:
                     df_right = results[source]
                     df_right[col] = df_right[col].apply(str)
                     df_result = df_result.merge(df_right, on=col)
+                source_done[source] = True
         return df_result
 
     def resolve_aggregation(self, df_in, groupby, aggregation):

@@ -12,7 +12,7 @@ def list2dict(data):
 
 class ReviewText:
     schema = {
-        'review_text': ['reviewerID', 'asin', 'review_length', 'avg_word_length', 'number_word_capital', 'ratio_exlamation_question', 'avg_sentence_length', 'tfidf_100', 'reviewText']
+        'review_text': ['reviewerID', 'asin', 'review_length', 'avg_word_length', 'number_word_capital', 'number_exlamation_question', 'avg_sentence_length', 'tfidf', 'reviewText']
     }
     @classmethod
     def getColumn(cls, table, idx):
@@ -29,38 +29,40 @@ class ReviewText:
                 'review_length': self.get_review_length,
                 'avg_word_length': self.get_avg_word_length,
                 'number_word_capital': self.get_null,
-                'ratio_exlamation_question': self.get_null,
-                'avg_sentence_length': self.get_null,
+                'number_exlamation_question': self.get_punctuation_number,
+                'avg_sentence_length': self.get_avg_sentence_length,
                 #'ari': self.get_null,
-                'tfidf_100': self.get_tfidf,
+                'tfidf': self.get_tfidf,
                 'reviewText': self.get_raw,
                 }
         }
         self.term_vectors = None
 
     def get_null(self, solr_results):
-        return None
+        df_result = pd.DataFrame(list(solr_results))
+        df_result['number_word_capital'] = None
+        return df_result[['id', 'number_word_capital']]
+
 
     def get_raw(self, solr_results):
-        result = pd.DataFrame(list(solr_results))
-        return result
+        df_result = pd.DataFrame(list(solr_results))
+        return df_result
 
     def get_tfidf(self, solr_results):
         tvc = self.extract_term_vectors(solr_results.raw_response.get('termVectors', None), 'reviewText')
+        #rows = [[key,vc] for key,vc in tvc.items()]
+        df_result = pd.DataFrame(list(tvc.items()), columns=['id', 'tfidf'])
+        return df_result
 
     def get_review_length(self, solr_results):
         result = pd.DataFrame(list(solr_results))
         result['review_length'] = result['reviewText'].apply(len)
         return result
 
-    def get_punctuation_ratio(self, solr_results):
-        tvc = self.extract_term_vectors(solr_results.raw_response.get('termVectors', None), 'reviewText')
-        result = []
-        for id,tv in tvc.items():
-            word_count = sum([tv[w]['tf'] for w in tv])
-            total_length = sum([tv[w]['tf']*len(w) for w in tv])
-            result.append({'id': id, 'avg_word_length': total_length/word_count})
-        return pd.DataFrame(result)
+    def get_punctuation_number(self, solr_results):
+        df_result = pd.DataFrame(list(solr_results))
+        df_result['number_exlamation_question'] = df_result['reviewText'].apply(lambda x: str(x).count('?') + str(x).count('!'))
+        return df_result[['id', 'number_exlamation_question']]
 
     def get_avg_word_length(self, solr_results):
         tvc = self.extract_term_vectors(solr_results.raw_response.get('termVectors', None), 'reviewText')
@@ -70,6 +72,13 @@ class ReviewText:
             total_length = sum([tv[w]['tf']*len(w) for w in tv])
             result.append({'id': id, 'avg_word_length': total_length/word_count})
         return pd.DataFrame(result)
+
+    def get_avg_sentence_length(self, solr_results):
+        df_result = pd.DataFrame(list(solr_results))
+        df_result['review_length'] = df_result['reviewText'].apply(len)
+        df_result['sentence_count'] = df_result['reviewText'].apply(lambda x: x.count('.') + x.count('?') + x.count('!'))
+        df_result['avg_sentence_length'] = df_result['review_length'] / df_result['sentence_count']
+        return df_result[['id', 'avg_sentence_length']]
 
     def resolve(self, solr_results, view, feature_map):
         if view not in self.schema_map:

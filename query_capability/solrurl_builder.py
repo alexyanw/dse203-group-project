@@ -1,5 +1,6 @@
 import re
 from datalog_parser import DatalogParser
+import pprint
 
 __all__ = ['SolrUrlBuilder']
 
@@ -22,6 +23,7 @@ class SolrUrlBuilder:
     def getQueryRequests(self, **kwargs):
         requests = []
         for table in self.datalog['columns']:
+            if table not in self.schema: continue
             request_features = {}
             columns = self.datalog['columns'][table]
             for dst_col in columns:
@@ -51,8 +53,9 @@ class SolrUrlBuilder:
             'tv.df': 'true',
             'tv.tf_idf': 'true',
         }
-        if 'limit' in self.datalog:
-            params['rows'] = self.datalog['limit']
+        limit = self.datalog.get('limit', None)
+        if limit:
+            params['rows'] = limit
 
         return params
 

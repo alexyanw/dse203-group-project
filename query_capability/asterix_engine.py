@@ -72,6 +72,6 @@ class AsterixEngine:
         ret_cols = [d['column'] for d in datalog['return']]
         df_result = pd.DataFrame(result)
         df_result = df_result[ret_cols]
-        logger.debug("query sample result:\n{}\n".format(pprint.pformat(df_result[:5])))
+        logger.debug("query sample result:\n{}\n{}".format(pprint.pformat(df_result[:5]), df_result.shape))
         return df_result
 

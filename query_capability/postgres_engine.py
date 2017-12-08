@@ -46,7 +46,7 @@ class PostgresEngine:
             return cmd
         self.pg_conn = create_engine(self.dburl)
         df = pd.read_sql_query(cmd, self.pg_conn)
-        logger.debug("query sample result:\n{}\n".format(pprint.pformat(df[:5])))
+        logger.debug("query sample result:\n{}\n{}".format(pprint.pformat(df[:5]), df.shape))
         return df
 
     def query(self, datalog, **kwargs):

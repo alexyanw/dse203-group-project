@@ -47,15 +47,15 @@ class SQLBuilder:
             return_columns.append(str_ret_col)
         return ', '.join(return_columns)
 
-    def getJoinConditions(self):
+    def getJoinConditions(self, viewschema=None):
         if not self.datalog['join']: return ''
         join_columns = self.datalog['join']
         return_str = ""
         for col in join_columns:
             tables = join_columns[col]
-            base_str = self.getColumnName(tables[0], col) + "="
+            base_str = self.getColumnName(tables[0], col, schema=viewschema.get(tables[0], None)) + "="
             for table in tables[1:]:
-                return_str += (base_str + self.getColumnName(table, col) + " AND ")
+                return_str += (base_str + self.getColumnName(table, col, schema=viewschema.get(table, None)) + " AND ")
         return return_str[:-5]
 
     def getArithmeticConditions(self, datalogview=None):
@@ -75,10 +75,11 @@ class SQLBuilder:
         return arith_conds
 
     def getQueryCmd(self, datalogview=None):
+        viewschema = datalogview.get('schema', None) if datalogview else {}
         dbcmd = "SELECT " + self.getReturnColumns(datalogview) + \
                "\nFROM " + ', '.join(self.datalog['tables'])
         conditions = []
-        join_cond = self.getJoinConditions()
+        join_cond = self.getJoinConditions(viewschema)
         if join_cond: conditions.append(join_cond)
         conditions += self.getArithmeticConditions(datalogview)
         if conditions:

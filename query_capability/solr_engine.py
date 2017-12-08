@@ -56,7 +56,9 @@ class SolrEngine:
             df_results = self.filter_by_condition(df_results, datalog['conditions'][table])
         # filter result by return columns
         ret_cols = [ret['column'] for ret in datalog['return']]
-        return df_results[ret_cols]
+        df_results = df_results[ret_cols]
+        logger.debug("query sample result:\n{}\n{}".format(pprint.pformat(df_results[:5]), df_results.shape))
+        return df_results
 
     def filter_by_condition(self, df_in, conditions):
         if not conditions: return df_in

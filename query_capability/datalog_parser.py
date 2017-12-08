@@ -70,12 +70,18 @@ class DatalogParser:
         if len(self.source_tables) == 1: return True
         return False
 
+    def single_source_view(self):
+        sources = set(self.source_tables.keys())
+        if len(sources) == 2 and 'view' in sources: return True
+        return False
+
     def resolveAggregation(self, groupby):
         ''' 'groupby': { 'key': 'pid', 'aggregation': ['count(oid, total_orders)', 'sum(price, total_value)']},'''
         aggregation = {}
         if not groupby: return aggregation
         groupkey,aggs = groupby['key'], groupby.get('aggregation', {})
-        source,table = list(self.column_to_table[groupkey].items())[0]
+        col1 = groupkey.split(',')[0]
+        source,table = list(self.column_to_table[col1].items())[0]
         self.groupby = {'source': source, 'table':table, 'column': groupkey}
 
         for agg in aggs:
