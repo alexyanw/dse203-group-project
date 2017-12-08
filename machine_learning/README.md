@@ -8,7 +8,7 @@ A recommender system is a system that attempts to predict the rating or preferen
 This project aims to develop a proof-of-concept recommender system for a bookstore client. A small set of customer and supplemental data was provided for this effort. For the ML team, a prototype system should be designed with scalable architecture, verifiable performance results, and integrate services from other teams (exploration, schema, query).
 
 ## Dataset
-The sample data provided can be separated into two groups: customer information and supplemental information. 
+The sample data provided can be separated into two groups: customer information and supplemental information. Below is a brief description and examples of some of the data provided.
 
 The customer information contains order information and personal information related to the customer. Sometimes personal information is missing for the customer.
 * Books purchased
@@ -46,13 +46,13 @@ After performing some limited data exploration on the data, the following trends
 * Small number of books (~4k)
 * Large number of orders (~190k)
 
-There was effort made to determine how to find customers will similar behaviors so different models could be created for each cluster. Customers can be associated to demographic information via their profile and purchase address. By leveraging profile features such as gender and median age demographic information, one such clustering is:
+Additionally, the Data Exploration APIs helped us to understand the distribution of different customer or book characteristics like book price, seasonal popularity, book ratings, customer demographics etc.
+
+There was effort made to determine how to find customers will similar behaviors so different models could be created for each cluster. Customers can be associated to demographic cluster via their profile and purchase address. By leveraging profile features such as gender and median age demographic information, we can improve the clustering results. One example clustering can be seen below:
 
 ![alt text](Images/cluster1custDist.png)
 
 ![alt text](Images/3DzipcodeGenderMedianage.png)
-
-Data exploration apis helped us to understand the distribution of different customer or book characteristics like book price, seasonal popularity, book ratings, customer demographics etc.
 
 The price distribution api helped to change our price filter on the website to a more even distribution among different price ranges.
 
@@ -126,7 +126,7 @@ Due to the nature of the prototype, where online testing will not be available, 
 
 For validation, the total purchase data was split into 80-20 validation/test subsets, the 80% subset was used to validate/tune the models using 10-fold cross validation. The 20% subset is the holdout set used to evaluate the final performance of the prototype.
 
-For the Collaborative Filtering model, due to the process intensive testing, we looked for a way to minimize the required testing by reducing the data used for the model. We determined via validation that the model becomes more accurate with more data. Recall begins to taper off after 25k samples, but Catalog coverage is linear.
+For the Collaborative Filtering model, due to the process intensive testing, we looked for a way to minimize the required testing by reducing the data used for the model. We determined via validation that the model becomes more accurate with more data. Recall begins to taper off after 25k samples, but Catalog coverage is linear. After determining this, all the collaborative filtering validating was done with 25k samples or less.
 
 ![alt text](Images/generalcharts.png)
 
@@ -225,7 +225,7 @@ There are two version of the website, one that uses external database connection
 https://github.com/j-goldsmith/dse203-group-project/tree/master/machine_learning/demo
 
 ## Scalability Performance
-One of the downsides of Flask is that it was never designed for large or asynchronous applications [4], so getting performance metrics is difficult. However, if we understand the constraints of the setup, we might be able to get some meaningful results using the website and either the external/internal data:
+One of the downsides of Flask is that it was never designed for large or asynchronous applications [4], so getting performance metrics is difficult:
 * Internal data would be similar to having the data be stored in memory without indexes
 * Flask rest calls are synchronous and blocking
 * Flask uses local threads, which are limited due to access to only personal computers
@@ -237,14 +237,16 @@ Due to constraints of the setup, including no access to any hosting services. We
 If the website is hosted externally in the future, it will be able to show the runtime of each recommender query, which will provide a metric of how well the system was implemented.
 
 We explored several scenarios where increasing data would result in performance degradation and developed possible solutions that can be combined if necessary:
+* General
+	* Increase Processor speed and Memory of target servers
+	* Apply modern load balancing techniques to reduce server load on any one instance
 * Large increase in purchases
-    * Randomly sample purchases instead of using all the purchase data to build co-occurrence matrices (collaborative)
+	* Randomly sample purchases instead of using all the purchase data to build co-occurrence matrices (collaborative)
 * Large increase in new books, many books in each category
-    * Split all items co-occurrence matrix (collaborative) into separate matrices per category or combination of categories
-    * Build content rating lookups per category or combination of categories
+	* Split all items co-occurrence matrix (collaborative) into separate matrices per category or combination of categories
+	* Build content rating lookups per category or combination of categories
 * Large increase in reviews
-    * Randomly sample reviews instead of using all the review data to build content rating lookups
-
+	* Randomly sample reviews instead of using all the review data to build content rating lookups
 
     
 ## Challenges/Future Work
@@ -264,24 +266,33 @@ Based on the current results, we determined several areas of future development:
 * Using current time for recommendations, i.e. seasonality information automatically applied
 * Use historic predictions online results for tuning on model and having some feedback mechanism that automatically rebuilds the models
 * Host the model externally to test scalability and performance in a more production like environment
+* Additional validation/tuning using more categorical cases instead instead of just using general
 
 ## Source Code Summary
 * Data
-    * Extract
-    * Lookup
-    * Derived
+	* Extract [extracted source data)
+	* Encode_Mappings [encoding lookups for non-numerical data]
+	* Derived [new data derived from source]
+	* Results [data to generate result visualizations]
 * Notebooks
-    * Validation
-    * Model/Post Queries
-    * Exploration
+	* Create_Data [scripts to create derived data]
+	* Data_Exploration [scripts to do data exploration using data exploration api]
+	* Ingestion [scripts to ingest derived data into database]
+	* Performance [scripts to test performance of algorithm]
+	* Validation [scripts to do validation and holdout testing]
 * Demo
-    * Restful Queries
-* Images
+	* Templates [demo webpage template]
+	* Images [images for report]
+
 
 ## References
 
 [1]https://en.wikipedia.org/wiki/Recommender_system
+
 [2]http://homepages.abdn.ac.uk/advaith/pages/teaching/abdn.only/CS3017/lectures/
+
 [3]https://medium.com/recombee-blog/evaluating-recommender-systems-choosing-the-best-one-for-your-business-c688ab781a35
+
 [4]http://flask.pocoo.org/docs/0.12/design/
+
 [5]https://disco.ethz.ch/courses/fs10/seminar/paper/michael-2.pdf
