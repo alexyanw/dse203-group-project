@@ -48,21 +48,21 @@ After performing some limited data exploration on the data, the following trends
 
 There was effort made to determine how to find customers will similar behaviors so different models could be created for each cluster. Customers can be associated to demographic information via their profile and purchase address. By leveraging profile features such as gender and median age demographic information, one such clustering is:
 
-![cluster1custDist](images/cluster1custDist.png)
+![alt text](images/cluster1custDist.png)
 
-![3DzipcodeGenderMedianage](images/3DzipcodeGenderMedianage.png)
+![alt text](images/3DzipcodeGenderMedianage.png)
 
 Data exploration apis helped us to understand the distribution of different customer or book characteristics like book price, seasonal popularity, book ratings, customer demographics etc.
 
 The price distribution api helped to change our price filter on the website to a more even distribution among different price ranges.
 
-![original_price_distribution](images/original_price_distribution.png)
+![alt text](images/original_price_distribution.png)
 
-![final_price_distribution](images/final_price_distribution.png)
+![alt text](images/final_price_distribution.png)
 
 We also used the seasonal distribution api to look at the percentage of sales for books by season to determine the threshold to say the book is seasonal. We noticed a large spike for books in the 90-100% ranges meaning there are some books that had almost all of their sales in a certain season. Initially, we set our threshold to 40% thinking that a book can be popular in 2 seasons too; however, upon examining the distribution, we determined a book is seasonal if it’s popular only in 1 season. Based on this assumption, we selected the popularity threshold to be more than 50% of total sales. If a book has its total sales more than 50% in a certain season, it’s a seasonal book.
 
-![percentSoldbySeason](images/percentSoldbySeason.png)
+![alt text](images/percentSoldbySeason.png)
 
 ## Design
 Based on the requirements, the following properties were identified as being important to the system:
@@ -128,7 +128,7 @@ For validation, the total purchase data was split into 80-20 validation/test sub
 
 For the Collaborative Filtering model, due to the process intensive testing, we looked for a way to minimize the required testing by reducing the data used for the model. We determined via validation that the model becomes more accurate with more data. Recall begins to taper off after 25k samples, but Catalog coverage is linear.
 
-![generalcharts](images/generalcharts.png)
+![alt text](images/generalcharts.png)
 
 There was time spent on determining if specialized Collaborative Filtering models were required for specific demographics to improve accuracy. We generated clusters using various features such as:
 * gender,totalmales,totalfemales,totalpop
@@ -138,29 +138,29 @@ There was time spent on determining if specialized Collaborative Filtering model
 
 After comparing the various clusters, we found that cluster 1 [gender, totalmales, totalfemales, totalpop] had the most performance improvements. We determined in cluster 1 that groups [1,3,4,7] should have specialized models since they were the ones that perform better than general model. Note that we prioritized recall accuracy over the content coverage metric in this case.
 
-![accuracyClusterGeneral](images/accuracyClusterGeneral.png)
+![alt text](images/accuracyClusterGeneral.png)
 
-![coverageClusterGeneral](images/coverageClusterGeneral.png)
+![alt text](images/coverageClusterGeneral.png)
 
 For Content Filtering, we did some analysis on the books and noticed that 70% of customers purchased at least one book in the top 300. This lead to making a decision of only recommending the top N books.
 
-![topbooksByCust](images/topbooksByCust.png)
+![alt text](images/topbooksByCust.png)
 
 We then performed general recommendation validation. The image below shows the Top N books on x-axis and accuracy on y-axis. Each subplot shows the line graph for accuracy when X books are randomly picked from the Top N books. For example, in plot Pick 14 it shows that when you pick Top 40 books and then randomly choose 14 books from these 40, you get an accuracy of about 15%. Based on the results we decided that Top 40 makes most sense for general case. 
 
-![validation_general](images/validation_general.png)
+![alt text](images/validation_general.png)
 
 We also did validation for categories having more than 30 books, this helped us determine that a smaller set of top 20 recommendations and randomly picking X recommendations will have better accuracy. Below are the graphs to show results for a few categories. The 2 categories shown below are ‘History’ and ‘Engineering & Transportation’ respectively.
 
-![validation_categories](images/validation_categories.png)
+![alt text](images/validation_categories.png)
 
-![validation_categories1](images/validation_categories1.png)
+![alt text](images/validation_categories1.png)
 
 For the Hybrid Model, we tuned on what percentage we should mix the collaborative and content model recommendations. By using a default total recommendation of 10, after varying the amounts of each recommendation model, we found that a mix of 9 collaborative recommendations and 1 content recommendation gave better performance.
 
-![hybridAccuracy](images/hybridAccuracy.png)
+![alt text](images/hybridAccuracy.png)
 
-![hybridCoverage](images/hybridCoverage.png)
+![alt text](images/hybridCoverage.png)
 
 After tuning, the holdout set was used to generate results and we ended up with:
 * Recall Accuracy: 22%
@@ -197,7 +197,7 @@ For correct operation of our prototype, we require two main types of queries fro
 
 Below is a notional diagram on how the Model/Post queries feed the underlying databases and the Real-time queries to feed the recommendation output.
 
-![virtual_data_integration_system](images/virtual_data_integration_system.png)
+![alt text](images/virtual_data_integration_system.png)
 
 We decided to implement the prototype as a website using python Flask this was due to the fact that python was familiar to everyone on the team and the framework’s lightweight/modular design allowed rapid iterations. 
 
@@ -219,7 +219,7 @@ The website has two main components:
                 * Runtime
         * Books remaining in Category
 
-![demo](images/demo.png)
+![alt text](images/demo.png)
 
 There are two version of the website, one that uses external database connections and one that uses an internal data extract. They can both be found in the following location:
 https://github.com/j-goldsmith/dse203-group-project/tree/master/machine_learning/demo
