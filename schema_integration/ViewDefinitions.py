@@ -234,6 +234,7 @@ engine = HybridEngine(
 
 def define_virtual_view_in_source(query):
     engine.execute(query)
+    #print("##define virtual view ")
 
 
 define_virtual_view_in_source("CREATE OR REPLACE VIEW reviewcount as \

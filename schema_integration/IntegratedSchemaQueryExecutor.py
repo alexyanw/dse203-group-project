@@ -2,6 +2,7 @@ import pickle
 
 import re
 import sys
+import collections
 sys.path.append("..\\query_capability\\")
 
 from ViewDefinitions import view
@@ -18,6 +19,7 @@ def execute(query,condition=None,limit=None,debug=False,just_debug=False):
 
     qpe_dict_list=[]
     qpe_dl=dict()
+    qpe_dl['table']=[]
 
     try:
         query = query.lower()
@@ -29,26 +31,37 @@ def execute(query,condition=None,limit=None,debug=False,just_debug=False):
     qpe_dl['result']=head
     head_cols = get_cols(head)
 
-    ptrn = '^(\S*?)\('        #pattern to find the view in body
-    match = re.search(ptrn,body)
-    if match:
-        gv = match.group(1)
-        gv_cols = get_cols(body)
-        l = find_needed_cols(gv_cols,head_cols,condition)
-        dl = gsm[gv].get_child_dl(needed_cols=l)
-        #dl = gsm[gv].unwrap()
-        #print dl
-        qpe_dl['table'] = dl
-    else :
-        print("Unable to find body view.Please stick to this format. \nans(x,y)->viewname(x,_,y_)")
+    while True:
+        #ptrn = '^(\S*?)\((\S*?)\)'        #pattern to find the view in body
+        #match = re.search(ptrn,body)
+        strt = body.find('(')
+        stp  = body.find(')')
+        if strt!=-1 and stp !=-1:
+            gv = body[:strt]
+            c_body = gv+'('+body[strt+1:stp]+')'
+            gv_cols = get_cols(c_body)
+            l = find_needed_cols(gv_cols,head_cols,condition)
+            dl = gsm[gv].get_child_dl(needed_cols=l)
+            #dl = gsm[gv].unwrap()
+            #print dl
+            qpe_dl['table'] += dl
+        else :
+            #print("Unable to find body view.Please stick to this format. \nans(x,y)->viewname(x,_,y_)")
+            #sys.exit(1)
+            break
+        body=body[stp+2:]
 
     qpe_dl['condition'] =condition
     qpe_dl['limit']=limit
+    qpe_dl['table']=refine_query(qpe_dl['table'])
 
 
     qpe_dict_list=[qpe_dl]
     if debug==True:
         print_qpe_dict_list(qpe_dict_list)
+
+    if just_debug==True:
+        return "  "
 
     engine = HybridEngine(
         postgres={'server': '132.249.238.27', 'port': 5432, 'database': 'bookstore_pr', 'user': 'student',
@@ -67,6 +80,17 @@ def execute(query,condition=None,limit=None,debug=False,just_debug=False):
     #return qpe_dl
 
     #qpe_dl['condition'] =
+
+
+#Function to remove any redundant subgoals.
+def refine_query(ql):
+
+    #for x in ql
+    #set([x for x in ql if l.count(x) = 1])
+
+    ret_list = list(set(ql))
+
+    return ret_list
 
 
 def get_cols(q):
@@ -119,7 +143,7 @@ def print_available_views():
 
 #print_available_views()
 
-#result=execute('ans(asin,pid)->Cust_Prod(cid, pid ,asin)',condition=["cid='102019'"],debug=True)
+#result=execute('ans(cid,asin,nodeid)->Cust_Prod(cid,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,asin,nodeid),CategoryLevel_view(nodeid, level_1, level_2, level_3, level_4, level_5)',condition=["cid='102019'"],debug=True)
 
 
 
