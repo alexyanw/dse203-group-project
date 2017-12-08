@@ -2,7 +2,7 @@ from .datasources import SqlSource
 
 class Benchmarks(SqlSource):
 
-    def statsByFunction(self, min_date='1900-1-1', max_date=None, function_filter=None, sample_size=100):
+    def statsByFunction(self, min_date='1900-1-1', max_date=None, function_filter=[], sample_size=100):
         """Execution stats for API functions.
 
         Stats aggregated by function_name and is_cached.
@@ -45,7 +45,7 @@ class Benchmarks(SqlSource):
                 'sample_size':sample_size
             })
 
-    def clientActivity(self, aggregate=False, min_date='1900-1-1', max_date=None, clientid_filter=None, sample_size=100):
+    def clientActivity(self, aggregate=False, min_date='1900-1-1', max_date=None, clientid_filter=[], sample_size=100):
         """Hourly aggregate API activity by client.
 
         Args:
@@ -62,7 +62,7 @@ class Benchmarks(SqlSource):
                 results (:obj:`list` of :obj:`tuple(str,int,int))`
         """
 
-        max_date_filter = ' AND start <= %(max_date)s' if max_date else ' '
+        max_date_filter = ' AND start <= %(max_date)s ' if max_date else ' '
 
         if not aggregate:
             client_filter = ' AND c.clientid IN %(client_list)s ' if (type(clientid_filter) is list) & (len(clientid_filter) > 0) else ' '
@@ -88,13 +88,15 @@ class Benchmarks(SqlSource):
                         c.clientid = b.clientid
                         AND h.ofDay = DATE_PART('hour', b.start)
                 WHERE
-                    start >= %(min_date)s'''
-                    + max_date_filter
-                    + client_filter + '''
+                    b.benchmarkid IS NULL
+                    OR (
+                        start >= %(min_date)s'''
+                        + max_date_filter
+                        + client_filter + ''')
                 GROUP BY c.clientid, h.ofDay
                 ORDER BY c.clientid, h.ofDay;
             ''',{
-                'client_list':clientid_filter,
+                'client_list':tuple(clientid_filter),
                 'min_date':min_date,
                 'max_date':max_date,
                 'random_seed':self._random_seed,
@@ -105,17 +107,28 @@ class Benchmarks(SqlSource):
                 WITH
                     hours AS (
                         SELECT generate_series(0,23) as ofDay
+                    ),
+                    clients AS (
+                        SELECT DISTINCT clientid
+                        FROM eda_benchmarks
                     )
                 SELECT
                     h.ofDay as hour,
                     count(b.*) AS api_calls
-                FROM hours h
+                FROM
+                    clients c
+                CROSS JOIN hours h
                 LEFT JOIN eda_benchmarks b
                 TABLESAMPLE SYSTEM(%(sample_size)s) REPEATABLE(%(random_seed)s)
                     ON
-                     h.ofDay = DATE_PART('hour', b.start)
+                        c.clientid = b.clientid
+                        AND h.ofDay = DATE_PART('hour', b.start)
                 WHERE
-                    start >= %(min_date)s'''+ max_date_filter+ '''
+                    b.benchmarkid IS NULL
+                    OR (
+                        start >= %(min_date)s'''
+                        + max_date_filter +
+                        ''')
                 GROUP BY h.ofDay
                 ORDER BY h.ofDay;
             ''',{
