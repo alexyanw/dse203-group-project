@@ -914,4 +914,18 @@ CREATE TABLE asterix.CategoryLevel(nodeid, level_1, level_2, level_3, level_4, l
 
 CREATE TABLE asterix.CategoryFlat(nodeid, category);
 
+CREATE TABLE postgres.content_based
+(
+    asin varchar(15), rating numeric, spring numeric, summer numeric, winter numeric, fall numeric, 
+    fullprice money, isinstock int, lvl1 int, lvl2 int, lvl3 int, lvl4 int, lvl5 int
+);
+
+CREATE TABLE postgres.cooccurrence
+(
+    asin varchar(15), asin_other varchar(15), metric numeric, spring numeric, summer numeric, 
+    winter numeric, fall numeric, fullprice money, isinstock int, lvl1 int, lvl2 int, lvl3 int, 
+    lvl4 int, lvl5 int, demo_region int, demo_gender int
+);
+
+
 --postgres;

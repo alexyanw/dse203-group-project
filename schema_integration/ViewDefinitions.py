@@ -434,6 +434,14 @@ define_mapping("regions_map_view(customerid, region, gender) -> postgres.regions
 # 'CategoryFlat': ['nodeid', 'category'],
 
 define_mapping("CategoryLevel_view(nodeid, level_1, level_2, level_3, level_4, level_5) -> asterix.CategoryLevel(nodeid, level_1, level_2, level_3, level_4, level_5)")
-define_mapping("CategoryFlat_view(nodeid, category) -> asterix.CategoryFlat(nodeid, category)")
+
+define_mapping("Content_based_view(asin, rating, spring, summer, winter , fall, fullprice, isinstock , lvl1, lvl2 , lvl3, lvl4, lvl5) \
+                -> postgres.Content_based(asin, rating, spring, summer, winter , fall, fullprice, isinstock , lvl1, lvl2 , lvl3, lvl4, lvl5)")
+
+define_mapping("cooccurrence_view(asin, asin_other, metric , spring , summer , winter, fall, fullprice, isinstock, lvl1,\
+                lvl2 , lvl3, lvl4, lvl5, demo_region, demo_gender) -> postgres.cooccurrence(asin, asin_other, metric , \
+                spring , summer , winter, fall, fullprice, isinstock, lvl1, lvl2 , lvl3, lvl4, lvl5, demo_region, demo_gender)")
 
 pickle.dump( gsm, open( "global_schema_mappings.pkl", "wb" ) )
+
+define_mapping("CategoryFlat_view(nodeid, category) -> asterix.CategoryFlat(nodeid, category)")
