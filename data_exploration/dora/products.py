@@ -388,6 +388,28 @@ class Products(SqlSource):
             +nodeid_filter, {'nodeid':tuple(nodeid) if type(nodeid) is list else str(nodeid)})
 
     @log
+    def byAsin(self, nodeid):
+        """Retrieve products by category
+
+        Args:
+            nodeid (int): category nodeid to search for
+
+        Returns:
+           QueryResponse:
+               columns (:obj:`list` of :obj:`str`): ['asin']
+
+               results (:obj:`list` of :obj:`tuple(int)`)
+        """
+        nodeid_filter = (' WHERE nodeid in %(nodeid)s '
+            if type(nodeid) is list
+            else ' WHERE nodeid = %(nodeid)s ')
+
+        return self._execSqlQuery('''
+            SELECT asin
+            FROM products'''
+            +nodeid_filter, {'nodeid':tuple(nodeid) if type(nodeid) is list else str(nodeid)})    
+    
+    @log
     def clusterProducts(self,
                         feature_set=None,
                         n_clusters=8,
