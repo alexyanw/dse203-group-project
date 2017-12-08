@@ -246,3 +246,20 @@ class Categories(AsterixSource):
                 AND ci.level_5 != "N/A";'''
             	
         return self._execSqlPpQuery(query, {'node_id':node_id})
+
+    @log
+    def getNodes(self):
+        """Gets all nodeIDs and classifications for all categories.
+
+        Returns:
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['classification','nodeid']
+
+                results (:obj:`list` of :obj:`tuple(str,int)`
+        """
+        query = '''
+            SELECT ci.classification, ci.nodeID AS node_id
+            FROM ClassificationInfo ci;'''
+
+        return self._execSqlPpQuery(query)
+
