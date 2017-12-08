@@ -1,0 +1,225 @@
+Postgres queries 
+
+For most of the queries customerid=0 is removed
+
+1). How often do customers buy multiple of the same item? Is it in one purchase or multiple purchases? 
+
+Answer: Approximately 10% (10.31) of the customers by multiple of the same item
+60 customers make multiple purchases of multiple of same item and remaining 19498 customers make single purchases of multiple items
+
+queries 
+
+part 1
+SELECT * FROM orders
+WHERE customerid>0
+ORDER BY orderid
+
+Total query runtime: 1 min.
+189559 rows retrieved.
+
+SELECT o.customerid, o.orderid, ol.productid, ol.numunits
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE ol.numunits>1 AND customerid != 0
+
+Total query runtime: 2 secs.
+19558 rows retrieved.
+
+part2
+Created a column to show single and multiple purchases
+SELECT customerid, orderid, productid, numunits, case when ROW_NUM=1 then 'single purchase' else 'multiple purchase' END AS purchase
+FROM
+(SELECT o.customerid, o.orderid, ol.productid, ol.numunits, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.productid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE ol.numunits>1 AND customerid != 0) A
+Total query runtime: 4 secs.
+19558 rows retrieved.
+SELECT customerid, orderid, productid, numunits, case when ROW_NUM=1 then 'single purchase' else 'multiple purchase' END AS purchase
+FROM
+(SELECT o.customerid, o.orderid, ol.productid, ol.numunits, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.productid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE ol.numunits>1 AND customerid != 0) A
+WHERE ROW_NUM>1
+Total query runtime: 315 msec.
+60 rows retrieved.
+60 customers make multiple purchases
+
+2). How often are purchases made by repeat customers vs new customers? What is the frequency of the purchases of each group? (how often orders come in)
+
+Mostly repeat customers are ordering everyday from 10/4/2009 to 9/16/2016, according to the data
+
+SELECT c.orderdate, COUNT(*) AS order_counts FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+INNER JOIN orders C ON A.customerid = C.customerid
+WHERE A.ROW_NUM > 1
+GROUP BY c.orderdate
+ORDER BY c.orderdate
+
+Mostly new customers are also ordering everyday from 10/4/2009 to 9/16/2016, according to the data
+
+SELECT o.orderdate, COUNT(*) AS order_counts FROM orders AS o INNER JOIN
+(SELECT DISTINCT customerid FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+WHERE A.ROW_NUM = 1
+EXCEPT
+SELECT customerid FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)B
+WHERE B.ROW_NUM > 1) AS c ON o.customerid = c.customerid
+GROUP BY o.orderdate
+ORDER BY o.orderdate
+
+3). What do new customers usually purchase?
+New customers usually purchase books, with top 5 products are books with product id 11168, 11009, 12139, 12510,11088
+with counts 7912, 5266, 3895, 3826,2779 respectively
+
+query
+
+SELECT N.productid,p.name, p.groupname, counts FROM
+(SELECT ol.productid, COUNT(1) AS counts FROM orders AS o INNER JOIN
+(SELECT DISTINCT customerid FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+WHERE A.ROW_NUM = 1
+EXCEPT
+SELECT customerid FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)B
+WHERE B.ROW_NUM > 1) AS c ON o.customerid = c.customerid
+INNER JOIN orderlines ol on o.orderid = ol.orderid
+GROUP BY ol.productid
+ORDER BY counts DESC)N INNER JOIN products AS p ON N.productid = p.productid
+
+4). What do repeat customers usually purchase (same items or different items)?
+
+21229 repeat customers buying repeated same items
+31193 Repeated customers who buy different items.
+
+queries
+
+SELECT customerid FROM
+(SELECT A.customerid, p.name AS productname, ol.productid, COUNT(*) AS order_counts FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+INNER JOIN orders AS C ON A.customerid = C.customerid
+INNER JOIN orderlines AS ol ON C.orderid = ol.orderid
+INNER JOIN products AS P ON ol.productid = P.productid
+WHERE A.ROW_NUM > 1
+GROUP BY A.customerid, p.name, ol.productid)D
+WHERE order_counts > 1
+GROUP BY customerid
+
+Total query runtime: 5 secs.
+21229 rows retrieved.
+21229 repeat customers buying repeated same items
+
+SELECT customerid FROM
+(SELECT A.customerid, p.name AS productname, ol.productid, COUNT() AS order_counts FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+INNER JOIN orders AS C ON A.customerid = C.customerid
+INNER JOIN orderlines AS ol ON C.orderid = ol.orderid
+INNER JOIN products AS P ON ol.productid = P.productid
+WHERE A.ROW_NUM > 1
+GROUP BY A.customerid, p.name, ol.productid)D
+WHERE order_counts= 1
+GROUP BY customerid
+EXCEPT
+SELECT customerid FROM
+(SELECT A.customerid, p.name AS productname, ol.productid, COUNT() AS order_counts FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+INNER JOIN orders AS C ON A.customerid = C.customerid
+INNER JOIN orderlines AS ol ON C.orderid = ol.orderid
+INNER JOIN products AS P ON ol.productid = P.productid
+WHERE A.ROW_NUM > 1
+GROUP BY A.customerid, p.name, ol.productid)D
+WHERE order_counts > 1
+GROUP BY customerid
+
+Total query runtime: 9 secs.
+31193 rows retrieved.
+
+31193 Repeated customers who buy different items.
+
+5). How many items do customers purchase in one order? How many items do customers purchase in all their orders combined?
+Answer: Not sure of whether avg is asked for partj
+
+part 1: number of items for each order are listed with below query
+
+SELECT o.customerid, ol.orderid, SUM(ol.numunits) AS NoOfItems
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid !=0
+GROUP BY o.customerid, ol.orderid
+
+Total query runtime: 32 secs.
+189559 rows retrieved.
+
+part 2: total number of items of each customer is listed
+
+SELECT o.customerid, SUM(ol.numunits) AS NoOfItems
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid !=0
+GROUP BY o.customerid
+Total query runtime: 22 secs.
+189559 rows retrieved.
+
+6). Have all customers made purchases? How many are one time buyers vs repeat buyers?
+
+Answer: All the customers made atleast one purchase, 52422 are repeat customers and 137137 are one time buyers
+
+SELECT c.customerid
+FROM customers AS c LEFT OUTER JOIN orders AS o on c.customerid = o.customerid
+WHERE o.customerid != NULL
+
+part2
+SELECT DISTINCT customerid FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+WHERE A.ROW_NUM > 1
+Total query runtime: 5 secs.
+52422 rows retrieved.
+
+52422 are repeat customers
+
+SELECT DISTINCT customerid FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)A
+WHERE A.ROW_NUM = 1
+EXCEPT
+SELECT customerid FROM (
+SELECT o.customerid, ROW_NUMBER() OVER(PARTITION BY o.customerid, ol.orderid ORDER BY o.numunits) AS ROW_NUM
+FROM orders AS o
+INNER JOIN orderlines AS ol ON o.orderid = ol.orderid
+WHERE customerid != 0)B
+WHERE B.ROW_NUM > 1
+
+Total query runtime: 14 secs.
+137137 rows retrieved.
+
+137137 are the one time customers
