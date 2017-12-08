@@ -16,7 +16,7 @@ class Categories(AsterixSource):
             ci.category.nested.nested.nested.nested.nested.level_5 AS level_5'''
 
     @log
-    def search(self, string_search = ''):
+    def stringsearch(self, string_search = ''):
         """Case-sensitive search of all category levels.
 
         Args:
@@ -39,6 +39,26 @@ class Categories(AsterixSource):
                 or ci.category.nested.nested.nested.nested.nested.level_5 LIKE "%{search}%";'''
 
         return self._execSqlPpQuery(query, {'search':string_search})
+    
+    @log
+    def nodesearch(self, node_id):
+        """Numeric search by node_id of all category levels.
+
+        Args:
+            string_search (str)
+
+        Returns:
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['classification','nodeid','level_0','level_1','level_2','level_3','level_4','level_5']
+
+                results (:obj:`list` of :obj:`tuple(str,int,str,str,str,str,str,str)`
+        """
+        query = '''
+            SELECT '''+ self._fields + '''
+            FROM ClassificationInfo ci
+            WHERE ci.nodeID = {search};'''
+
+        return self._execSqlPpQuery(query, {'search':node_id})
 
     @log
     def parentOf(self, node_id):
@@ -226,3 +246,20 @@ class Categories(AsterixSource):
                 AND ci.level_5 != "N/A";'''
             	
         return self._execSqlPpQuery(query, {'node_id':node_id})
+
+    @log
+    def getNodes(self):
+        """Gets all nodeIDs and classifications for all categories.
+
+        Returns:
+            QueryResponse:
+                columns (:obj:`list` of :obj:`str`): ['classification','nodeid']
+
+                results (:obj:`list` of :obj:`tuple(str,int)`
+        """
+        query = '''
+            SELECT ci.classification, ci.nodeID AS node_id
+            FROM ClassificationInfo ci;'''
+
+        return self._execSqlPpQuery(query)
+

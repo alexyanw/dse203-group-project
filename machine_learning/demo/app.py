@@ -18,6 +18,7 @@ NUM_RECOMMENDATIONS_MIX = [0.9,0.1]
 
 # Number of recommendaions to randomize from in content filtering
 NUM_RECOMMENDATIONS_C = 40
+NUM_RECOMMENDATIONS_Cat = 20
 
 # Ratio that identifies popularity for seasons
 RATIO_POPULAR_SEASON = 0.4
@@ -301,7 +302,7 @@ def get_contentrec():
 	arg_price = int(request.args.get('max_price',0))
 
 	# this is for the demo, so the results are consistent per customer.
-	np.random.seed(sum(list(map(int,arg_purchase_list))))
+	np.random.seed(sum(get_idx_from_asin(arg_purchase_list))+sum(arg_cat_list))
 
 	# content matrix
 	rowsum = np.copy(matrix_content)
@@ -333,7 +334,10 @@ def get_contentrec():
 
 	# Select top indexes
 	indices = np.nonzero(rowsum)[0]
-	randrec = indices[np.argsort(rowsum[indices])][-1 * NUM_RECOMMENDATIONS_C:][::-1]
+	if arg_cat_list[0] == 0:
+		randrec = indices[np.argsort(rowsum[indices])][-1 * NUM_RECOMMENDATIONS_C:][::-1]
+	else:
+		randrec = indices[np.argsort(rowsum[indices])][-1 * NUM_RECOMMENDATIONS_Cat:][::-1]
 	randindices = np.random.permutation(randrec)[:arg_num_rec]
 	toprec = randindices[np.argsort(rowsum[randindices])][::-1]
 
